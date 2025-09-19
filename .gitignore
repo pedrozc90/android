@@ -1,2 +1,50 @@
+# -----------------------------
+# IntelliJ IDEA
+# -----------------------------
 .idea/
+*.iws
 *.iml
+*.ipr
+
+# -----------------------------
+# Android Studio / Gradle
+# -----------------------------
+# Ignore build outputs, caches, local properties for all apps
+apps/**/.gradle
+apps/**/.externalNativeBuild
+apps/**/.cxx
+apps/**/build
+apps/**/captures
+apps/**/local.properties
+
+# -----------------------------
+# General build outputs
+# -----------------------------
+# Gradle wrapper files (optional if you commit your wrapper)
+.gradle/
+build/
+
+# -----------------------------
+# NDK / CMake build artifacts
+# -----------------------------
+.externalNativeBuild/
+.cxx/
+
+# -----------------------------
+# Other files you generally don't commit
+# -----------------------------
+# If you generate APKs locally
+*.apk
+*.ap_ 
+*.aab
+*.hprof
+
+# -----------------------------
+# Optional: logs, temp files
+# -----------------------------
+.kotlin
+
+# -----------------------------
+# Optional: logs, temp files
+# -----------------------------
+*.log
