@@ -87,7 +87,7 @@ fun CupcakeApp(
             CupcakeAppBar(
                 currentScreen = currentScreen,
                 canNavigateBack = navController.previousBackStackEntry != null,
-                navigateUp = { /* TODO: implement back navigation */ }
+                navigateUp = { navController.navigateUp() }
             )
         }
     ) { innerPadding ->
