@@ -1,8 +1,8 @@
-package questions
+package unit2.questions
 
-import org.example.questions.Difficulty
-import org.example.questions.Question
-import org.example.questions.Quiz
+import org.example.unit2.questions.Difficulty
+import org.example.unit2.questions.Question
+import org.example.unit2.questions.Quiz
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

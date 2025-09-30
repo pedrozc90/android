@@ -1,4 +1,6 @@
-import org.example.Calculator
+package unit2
+
+import org.example.unit2.Calculator
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

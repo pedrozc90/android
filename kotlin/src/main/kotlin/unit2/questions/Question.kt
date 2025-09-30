@@ -1,4 +1,4 @@
-package org.example.questions
+package org.example.unit2.questions
 
 data class Question<T>(
     val questionText: String,

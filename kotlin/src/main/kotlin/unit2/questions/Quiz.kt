@@ -1,4 +1,4 @@
-package org.example.questions
+package org.example.unit2.questions
 
 class Quiz : ProgressPrintable {
 
@@ -10,8 +10,8 @@ class Quiz : ProgressPrintable {
         get() = "${answered} of ${total} answered"
 
     override fun printProgressBar() {
-        repeat(Quiz.answered) { print("#") }
-        repeat(Quiz.total - Quiz.answered) { print("#") }
+        repeat(answered) { print("#") }
+        repeat(total - answered) { print("#") }
         println()
         println(progressText)
     }
