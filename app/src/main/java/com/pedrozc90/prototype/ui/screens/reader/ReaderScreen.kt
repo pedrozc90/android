@@ -1,5 +1,6 @@
 package com.pedrozc90.prototype.ui.screens.reader
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,10 +11,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -31,6 +35,8 @@ fun ReaderScreen(
     modifier: Modifier = Modifier,
     model: ReaderViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+    val state = model._uiState.collectAsState()
+
     Column(
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -38,12 +44,14 @@ fun ReaderScreen(
     ) {
         // Top: Counter
         ReaderCounter(
+            counter = state.value.counter(),
             modifier = Modifier
                 .padding(top = 8.dp)
         )
 
         // Middle: List with a fixed size and scrollable
         ReaderList(
+            epcs = state.value.epcs,
             modifier = Modifier
                 .weight(1f)
                 .padding(vertical = 8.dp)
@@ -51,7 +59,14 @@ fun ReaderScreen(
 
         // Bottom: Actions
         ReaderActions(
-            onStartReading = {},
+            textId = if (state.value.isRunning) R.string.stop_reading else R.string.start_reading,
+            onClick = {
+                if (state.value.isRunning) {
+                    model.stopReading()
+                } else {
+                    model.startReading()
+                }
+            },
             onGoBack = nagivateBack,
             modifier = Modifier
         )
@@ -60,6 +75,7 @@ fun ReaderScreen(
 
 @Composable
 fun ReaderCounter(
+    counter: Int,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -77,7 +93,7 @@ fun ReaderCounter(
             modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium))
         )
         Text(
-            text = "0",
+            text = counter.toString(),
             style = MaterialTheme.typography.headlineLarge
         )
     }
@@ -85,44 +101,25 @@ fun ReaderCounter(
 
 @Composable
 fun ReaderList(
+    epcs: List<String>,
     modifier: Modifier = Modifier
 ) {
-    val data = setOf<String>(
-        "a",
-        "b",
-        "c",
-//        "d",
-//        "e",
-//        "f",
-//        "g",
-//        "h",
-//        "i",
-//        "j",
-//        "k",
-//        "l",
-//        "m",
-//        "n",
-//        "o",
-//        "p",
-//        "q",
-//        "r",
-//        "s",
-//        "t",
-//        "u",
-//        "v",
-//        "w",
-//        "x",
-//        "y",
-//        "z"
-    )
+    val gridState = rememberLazyGridState()
+
+    // automatically scroll to the bottom when a new item is added
+    LaunchedEffect(epcs.size) {
+        if (gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == epcs.lastIndex - 1 && epcs.isNotEmpty()) {
+            gridState.animateScrollToItem(epcs.lastIndex)
+        }
+    }
 
     LazyVerticalGrid(
+        state = gridState,
         columns = GridCells.Fixed(1),
         modifier = modifier
-//            .fillMaxSize()
             .padding(horizontal = 4.dp),
     ) {
-        items(items = data.toList()) { row ->
+        items(items = epcs) { row ->
             Text(
                 text = row,
                 modifier = Modifier
@@ -135,7 +132,8 @@ fun ReaderList(
 
 @Composable
 fun ReaderActions(
-    onStartReading: () -> Unit,
+    @StringRes textId: Int,
+    onClick: () -> Unit,
     onGoBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -146,12 +144,12 @@ fun ReaderActions(
     ) {
         // Start / Stop Reading Button
         Button(
-            onClick = onStartReading,
+            onClick = onClick,
             modifier = Modifier
                 .fillMaxWidth()
         ) {
             Text(
-                text = stringResource(R.string.start_reading)
+                text = stringResource(textId)
             )
         }
 
