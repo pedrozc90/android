@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -28,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pedrozc90.prototype.R
 import com.pedrozc90.prototype.ui.AppViewModelProvider
 import com.pedrozc90.prototype.ui.theme.PrototypeTheme
+import kotlinx.coroutines.delay
 
 @Composable
 fun ReaderScreen(
@@ -44,14 +46,14 @@ fun ReaderScreen(
     ) {
         // Top: Counter
         ReaderCounter(
-            counter = state.value.counter(),
+            state = state.value,
             modifier = Modifier
                 .padding(top = 8.dp)
         )
 
         // Middle: List with a fixed size and scrollable
         ReaderList(
-            epcs = state.value.epcs,
+            state = state.value,
             modifier = Modifier
                 .weight(1f)
                 .padding(vertical = 8.dp)
@@ -62,9 +64,9 @@ fun ReaderScreen(
             textId = if (state.value.isRunning) R.string.stop_reading else R.string.start_reading,
             onClick = {
                 if (state.value.isRunning) {
-                    model.stopReading()
+                    model.onStop()
                 } else {
-                    model.startReading()
+                    model.onStart()
                 }
             },
             onGoBack = nagivateBack,
@@ -75,7 +77,7 @@ fun ReaderScreen(
 
 @Composable
 fun ReaderCounter(
-    counter: Int,
+    state: ReaderUiState,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -93,7 +95,7 @@ fun ReaderCounter(
             modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium))
         )
         Text(
-            text = counter.toString(),
+            text = state.counter.toString(),
             style = MaterialTheme.typography.headlineLarge
         )
     }
@@ -101,15 +103,17 @@ fun ReaderCounter(
 
 @Composable
 fun ReaderList(
-    epcs: List<String>,
+    state: ReaderUiState,
     modifier: Modifier = Modifier
 ) {
     val gridState = rememberLazyGridState()
 
     // automatically scroll to the bottom when a new item is added
-    LaunchedEffect(epcs.size) {
-        if (gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == epcs.lastIndex - 1 && epcs.isNotEmpty()) {
-            gridState.animateScrollToItem(epcs.lastIndex)
+    LaunchedEffect(state.lastIndex) {
+        val lastVisible = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+        if (state.lastIndex >= 0) {
+             // gridState.animateScrollToItem(state.lastIndex)
+             gridState.scrollToItem(state.lastIndex)
         }
     }
 
@@ -119,7 +123,7 @@ fun ReaderList(
         modifier = modifier
             .padding(horizontal = 4.dp),
     ) {
-        items(items = epcs) { row ->
+        items(items = state.epcs) { row ->
             Text(
                 text = row,
                 modifier = Modifier
