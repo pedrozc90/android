@@ -18,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -29,13 +28,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pedrozc90.prototype.R
 import com.pedrozc90.prototype.ui.AppViewModelProvider
 import com.pedrozc90.prototype.ui.theme.PrototypeTheme
-import kotlinx.coroutines.delay
 
 @Composable
 fun ReaderScreen(
     nagivateBack: () -> Unit,
     modifier: Modifier = Modifier,
-    model: ReaderViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    model: ReaderViewModelContract = viewModel<ReaderViewModel>(factory = AppViewModelProvider.Factory)
 ) {
     val state = model._uiState.collectAsState()
 
@@ -69,6 +67,8 @@ fun ReaderScreen(
                     model.onStart()
                 }
             },
+            onSaveEnabled = !state.value.isRunning && state.value.counter > 0,
+            onSave = { model.onSave() },
             onGoBack = nagivateBack,
             modifier = Modifier
         )
@@ -112,8 +112,8 @@ fun ReaderList(
     LaunchedEffect(state.lastIndex) {
         val lastVisible = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
         if (state.lastIndex >= 0) {
-             // gridState.animateScrollToItem(state.lastIndex)
-             gridState.scrollToItem(state.lastIndex)
+            // gridState.animateScrollToItem(state.lastIndex)
+            gridState.scrollToItem(state.lastIndex)
         }
     }
 
@@ -138,6 +138,8 @@ fun ReaderList(
 fun ReaderActions(
     @StringRes textId: Int,
     onClick: () -> Unit,
+    onSaveEnabled: Boolean,
+    onSave: () -> Unit,
     onGoBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -154,6 +156,18 @@ fun ReaderActions(
         ) {
             Text(
                 text = stringResource(textId)
+            )
+        }
+
+        // Save Button
+        Button(
+            enabled = onSaveEnabled,
+            onClick = onSave,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Text(
+                text = stringResource(R.string.save)
             )
         }
 

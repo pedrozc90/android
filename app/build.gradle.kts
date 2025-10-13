@@ -66,6 +66,7 @@ dependencies {
 
     // navigation
     implementation(libs.androidx.navigation.compose)
+    androidTestImplementation(libs.androidx.navigation.testing)
 
     // retrofit
     implementation(libs.okhttp)

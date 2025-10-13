@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 
 const val TAG = "FakeRfidReader"
 
@@ -45,9 +46,15 @@ class FakeRfidReader(
                 } else {
                     Log.d(TAG, "Scanned EPC: $epc")
                 }
+
                 if (_delayMs > 0) {
                     delay(_delayMs)
+                } else {
+                    // If delay is 0, yield occasionally to give other coroutines (UI/collector) a chance.
+                    // Not strictly necessary with a buffered channel, but polite.
+                    yield()
                 }
+
                 currentIndex++
             }
         }

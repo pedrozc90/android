@@ -1,12 +1,12 @@
 package com.pedrozc90.prototype.devices
 
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
 interface RfidReader {
 
     val name: String
-
 
     fun startReading()
 
@@ -20,7 +20,10 @@ abstract class BaseRfidReader : RfidReader {
     // isn't scheduled immediately. This avoids races where emit() suspends and the
     // emitting coroutine is cancelled, which can make subsequent starts behave
     // unexpectedly.
-    protected val _flow = MutableSharedFlow<String>(extraBufferCapacity = 64)
+    protected val _flow = MutableSharedFlow<String>(
+        extraBufferCapacity = 64,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
     val flow = _flow.asSharedFlow()
 
 }

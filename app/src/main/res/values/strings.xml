@@ -4,4 +4,5 @@
     <string name="start_reading">Start Reading</string>
     <string name="stop_reading">Stop Reading</string>
     <string name="go_back">Go Back</string>
+    <string name="save">Save</string>
 </resources>
