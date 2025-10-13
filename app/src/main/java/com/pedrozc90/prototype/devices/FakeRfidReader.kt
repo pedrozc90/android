@@ -5,8 +5,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
+import kotlin.random.Random
 
 const val TAG = "FakeRfidReader"
 
@@ -18,7 +20,6 @@ class FakeRfidReader(
     override val name: String = "Fake RFID Reader"
 
     private var job: Job? = null
-    private var currentIndex: Int = 0
 
     init {
         val itemReference = "1010101010"
@@ -32,19 +33,27 @@ class FakeRfidReader(
 
     override fun startReading() {
         if (job?.isActive == true) return
+
         Log.d(TAG, "Starting reading job")
+
         job = CoroutineScope(Dispatchers.Default).launch {
-            while (currentIndex < _epcs.size) {
-                val epc = _epcs[currentIndex]
-                // Use tryEmit so the emitter never suspends waiting for collectors.
-                // Suspending emit() combined with cancellation can create races where
-                // the emitter coroutine is cancelled while suspended and future
-                // starts don't behave as expected. tryEmit avoids that.
-                val emitted = _flow.tryEmit(epc)
-                if (!emitted) {
-                    Log.d(TAG, "Failed to emit EPC (buffer full): $epc")
-                } else {
-                    Log.d(TAG, "Scanned EPC: $epc")
+            val length = _epcs.size
+            while (isActive) {
+                val n = Random.nextInt(from = 0, until = 50)
+
+                for (x in 0..n) {
+                    val index = Random.nextInt(from = 0, until = length)
+                    val epc = _epcs[index]
+                    // Use tryEmit so the emitter never suspends waiting for collectors.
+                    // Suspending emit() combined with cancellation can create races where
+                    // the emitter coroutine is cancelled while suspended and future
+                    // starts don't behave as expected. tryEmit avoids that.
+                    val emitted = _flow.tryEmit(epc)
+                    if (!emitted) {
+                        Log.d(TAG, "Failed to emit EPC (buffer full): $epc")
+                    } else {
+                        Log.d(TAG, "Scanned EPC: $epc")
+                    }
                 }
 
                 if (_delayMs > 0) {
@@ -54,8 +63,6 @@ class FakeRfidReader(
                     // Not strictly necessary with a buffered channel, but polite.
                     yield()
                 }
-
-                currentIndex++
             }
         }
     }

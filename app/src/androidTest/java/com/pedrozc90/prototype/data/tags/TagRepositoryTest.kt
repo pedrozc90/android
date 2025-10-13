@@ -8,13 +8,10 @@ import com.pedrozc90.prototype.data.Tag
 import com.pedrozc90.prototype.data.TagRepository
 import com.pedrozc90.prototype.data.db.PrototypeDatabase
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runner.manipulation.Ordering
-import kotlin.jvm.Throws
 import kotlin.system.measureTimeMillis
 
 @RunWith(AndroidJUnit4::class)

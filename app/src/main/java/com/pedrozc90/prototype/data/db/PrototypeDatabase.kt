@@ -6,8 +6,9 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.pedrozc90.prototype.data.Tag
 import com.pedrozc90.prototype.data.TagDao
+import com.pedrozc90.prototype.data.read.Read
 
-@Database(entities = [Tag::class], version = 1, exportSchema = true)
+@Database(entities = [Tag::class, Read::class], version = 1, exportSchema = true)
 abstract class PrototypeDatabase : RoomDatabase() {
 
     abstract fun tagDao(): TagDao

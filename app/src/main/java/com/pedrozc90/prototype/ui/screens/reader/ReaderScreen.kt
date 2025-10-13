@@ -35,7 +35,7 @@ fun ReaderScreen(
     modifier: Modifier = Modifier,
     model: ReaderViewModelContract = viewModel<ReaderViewModel>(factory = AppViewModelProvider.Factory)
 ) {
-    val state = model._uiState.collectAsState()
+    val state = model.uiState.collectAsState()
 
     Column(
         verticalArrangement = Arrangement.SpaceBetween,

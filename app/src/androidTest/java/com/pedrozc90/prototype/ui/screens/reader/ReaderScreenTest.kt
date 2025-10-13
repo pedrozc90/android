@@ -15,10 +15,10 @@ import org.junit.Test
 const val TAG = "FakeReaderViewModel"
 
 class FakeReaderViewModel(
-    private val uiState: ReaderUiState
+    private val state: ReaderUiState
 ) : ViewModel(), ReaderViewModelContract {
 
-    override val _uiState = MutableStateFlow(uiState)
+    override val uiState = MutableStateFlow(state)
 
     override fun onStart() {
         Log.d(TAG, "onStart called")
