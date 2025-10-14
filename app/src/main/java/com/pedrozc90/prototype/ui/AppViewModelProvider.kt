@@ -9,6 +9,7 @@ import com.pedrozc90.prototype.data.AppContainer
 import com.pedrozc90.prototype.data.TagRepository
 import com.pedrozc90.prototype.ui.screens.home.HomeViewModel
 import com.pedrozc90.prototype.ui.screens.reader.ReaderViewModel
+import com.pedrozc90.prototype.ui.screens.settings.SettingsViewModel
 
 object AppViewModelProvider {
 
@@ -21,6 +22,11 @@ object AppViewModelProvider {
         // reader
         initializer {
             ReaderViewModel(repository = container().tagRepository)
+        }
+
+        // settings
+        initializer {
+            SettingsViewModel()
         }
     }
 

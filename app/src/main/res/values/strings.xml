@@ -5,4 +5,8 @@
     <string name="stop_reading">Stop Reading</string>
     <string name="go_back">Go Back</string>
     <string name="save">Save</string>
+    <string name="home">Home</string>
+    <string name="reader">Reader</string>
+    <string name="settings">Settings</string>
+    <string name="potency">Potency</string>
 </resources>

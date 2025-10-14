@@ -31,7 +31,7 @@ import com.pedrozc90.prototype.ui.theme.PrototypeTheme
 
 @Composable
 fun ReaderScreen(
-    nagivateBack: () -> Unit,
+    navigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     model: ReaderViewModelContract = viewModel<ReaderViewModel>(factory = AppViewModelProvider.Factory)
 ) {
@@ -69,7 +69,7 @@ fun ReaderScreen(
             },
             onSaveEnabled = !state.value.isRunning && state.value.counter > 0,
             onSave = { model.onSave() },
-            onGoBack = nagivateBack,
+            onGoBack = navigateBack,
             modifier = Modifier
         )
     }
@@ -189,7 +189,7 @@ fun ReaderActions(
 fun HomeScreenPreview() {
     PrototypeTheme {
         ReaderScreen(
-            nagivateBack = {}
+            navigateBack = {}
         )
     }
 }
