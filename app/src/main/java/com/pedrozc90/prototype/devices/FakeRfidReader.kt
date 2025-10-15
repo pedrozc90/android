@@ -1,6 +1,7 @@
 package com.pedrozc90.prototype.devices
 
 import android.util.Log
+import com.pedrozc90.prototype.utils.EpcUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -74,7 +75,7 @@ class FakeRfidReader(
     }
 
     private fun generateEpc(itemReference: String, serialNumber: Long): String {
-        return "EPC:${itemReference}:${serialNumber.toString().padStart(7, '0')}"
+        return EpcUtils.encode(itemReference, serialNumber)
     }
 
 }

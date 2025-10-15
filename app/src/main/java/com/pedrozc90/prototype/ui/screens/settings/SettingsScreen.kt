@@ -4,9 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -22,7 +25,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     model: SettingsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
-    val uiState = model._uiState.value
+    val state by model.uiState.collectAsState()
 
     Column(
         verticalArrangement = Arrangement.Center,
@@ -31,21 +34,38 @@ fun SettingsScreen(
             .fillMaxWidth()
             .padding(all = 16.dp)
     ) {
-        val potencyLabel = stringResource(R.string.potency)
-        val potencyValue = uiState.potency
-        Text(text = "$potencyLabel (${potencyValue})")
-        Slider(
-            value = uiState.potency,
-            valueRange = 0f..100f,
-            steps = 99, // max value is divided by steps + 1
-            onValueChange = {
-                model.setPotency(it)
-            },
-            onValueChangeFinished = {
-                model.persistSettings()
-            }
+        PotencySlider(
+            state = state,
+            onValueChange = { model.setPotency(it) },
+            onValueChangeFinished = { model.persistSettings() }
         )
+
+        Button(
+            onClick = { model.resetDatabase() }
+        ) {
+            Text(text = stringResource(R.string.reset_database))
+        }
     }
+}
+
+@Composable
+fun PotencySlider(
+    state: SettingsUiState,
+    onValueChange: (Float) -> Unit,
+    onValueChangeFinished: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val potencyLabel = stringResource(R.string.potency)
+    val potencyValue = state.potency
+    Text(text = "$potencyLabel (${potencyValue})")
+    Slider(
+        value = state.potency,
+        valueRange = 0f..100f,
+        steps = 99, // max value is divided by steps + 1
+        onValueChange = onValueChange,
+        onValueChangeFinished = onValueChangeFinished,
+        modifier = modifier
+    )
 }
 
 @Preview(showBackground = true)

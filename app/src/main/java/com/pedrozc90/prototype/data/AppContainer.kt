@@ -1,6 +1,7 @@
 package com.pedrozc90.prototype.data
 
 import android.content.Context
+import androidx.room.RoomDatabase
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.pedrozc90.prototype.data.db.PrototypeDatabase
 import com.pedrozc90.prototype.network.PrototypeApiService
@@ -16,6 +17,7 @@ interface AppContainer {
     // database
     val database: PrototypeDatabase
     val tagRepository: TagRepository
+    val readRepository: ReadRepository
 
 }
 
@@ -48,6 +50,10 @@ class DefaultAppContainer(context: Context) : AppContainer {
 
     override val tagRepository: TagRepository by lazy {
         TagRepository(database.tagDao())
+    }
+
+    override val readRepository: ReadRepository by lazy {
+        ReadRepository(database.readDao())
     }
 
 }

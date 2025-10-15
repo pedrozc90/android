@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.pedrozc90.prototype.PrototypeApplication
 import com.pedrozc90.prototype.data.AppContainer
+import com.pedrozc90.prototype.data.ReadRepository
 import com.pedrozc90.prototype.data.TagRepository
 import com.pedrozc90.prototype.ui.screens.home.HomeViewModel
 import com.pedrozc90.prototype.ui.screens.reader.ReaderViewModel
@@ -21,12 +22,18 @@ object AppViewModelProvider {
 
         // reader
         initializer {
-            ReaderViewModel(repository = container().tagRepository)
+            ReaderViewModel(
+                tagRepository = container().tagRepository,
+                readRepository = container().readRepository
+            )
         }
 
         // settings
         initializer {
-            SettingsViewModel()
+            SettingsViewModel(
+                tagRepository = container().tagRepository,
+                readRepository = container().readRepository
+            )
         }
     }
 
@@ -37,4 +44,5 @@ fun CreationExtras.application(): PrototypeApplication =
 
 fun CreationExtras.container(): AppContainer = application().container
 
-fun CreationExtras.tagRepository(): TagRepository = container().tagRepository
+// fun CreationExtras.tagRepository(): TagRepository = container().tagRepository
+// fun CreationExtras.readRepository(): ReadRepository = container().readRepository

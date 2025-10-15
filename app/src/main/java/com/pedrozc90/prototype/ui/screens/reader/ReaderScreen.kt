@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -35,7 +36,7 @@ fun ReaderScreen(
     modifier: Modifier = Modifier,
     model: ReaderViewModelContract = viewModel<ReaderViewModel>(factory = AppViewModelProvider.Factory)
 ) {
-    val state = model.uiState.collectAsState()
+    val state by model.uiState.collectAsState()
 
     Column(
         verticalArrangement = Arrangement.SpaceBetween,
@@ -44,14 +45,14 @@ fun ReaderScreen(
     ) {
         // Top: Counter
         ReaderCounter(
-            state = state.value,
+            state = state,
             modifier = Modifier
                 .padding(top = 8.dp)
         )
 
         // Middle: List with a fixed size and scrollable
         ReaderList(
-            state = state.value,
+            state = state,
             modifier = Modifier
                 .weight(1f)
                 .padding(vertical = 8.dp)
@@ -59,15 +60,15 @@ fun ReaderScreen(
 
         // Bottom: Actions
         ReaderActions(
-            textId = if (state.value.isRunning) R.string.stop_reading else R.string.start_reading,
+            textId = if (state.isRunning) R.string.stop_reading else R.string.start_reading,
             onClick = {
-                if (state.value.isRunning) {
+                if (state.isRunning) {
                     model.onStop()
                 } else {
                     model.onStart()
                 }
             },
-            onSaveEnabled = !state.value.isRunning && state.value.counter > 0,
+            onSaveEnabled = !state.isRunning && state.counter > 0,
             onSave = { model.onSave() },
             onGoBack = navigateBack,
             modifier = Modifier

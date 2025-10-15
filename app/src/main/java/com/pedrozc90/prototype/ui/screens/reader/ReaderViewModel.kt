@@ -3,19 +3,21 @@ package com.pedrozc90.prototype.ui.screens.reader
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pedrozc90.prototype.data.ReadRepository
 import com.pedrozc90.prototype.data.Tag
 import com.pedrozc90.prototype.data.TagBaseRepository
+import com.pedrozc90.prototype.data.read.Read
 import com.pedrozc90.prototype.devices.FakeRfidReader
+import com.pedrozc90.prototype.utils.EpcUtils
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,29 +41,16 @@ private sealed class ActorCmd {
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ReaderViewModel(
-    val repository: TagBaseRepository
+    val tagRepository: TagBaseRepository,
+    val readRepository: ReadRepository,
 ) : ViewModel(), ReaderViewModelContract {
 
     val reader = FakeRfidReader(_delayMs = 1L)
 
-    var _job: Job? = null
+    private var _job: Job? = null
 
-    private val _isRunning = MutableStateFlow<Boolean>(false)
-
-    // internal snapshot list of UI (avoid mutability issues)
-    private val _snapshot = mutableListOf<String>()
-    private val _list = MutableStateFlow<List<String>>(emptyList())
-
-    override val uiState = combine(_list, _isRunning) { epcs, isRunning ->
-        ReaderUiState(
-            epcs = epcs,
-            isRunning = isRunning
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = ReaderUiState()
-    )
+    private val _uiState = MutableStateFlow(ReaderUiState())
+    override val uiState = _uiState.asStateFlow()
 
     // in-memory dedupe for the life of this ViewModel
     private val _processed = mutableSetOf<String>()
@@ -145,10 +134,20 @@ class ReaderViewModel(
         ack.await()
     }
 
-    // Start reading and forward EPCs quickly to the channel
-    fun startReading() {
+    private suspend fun processBatch(payload: List<String>) {
+        _uiState.update { state ->
+            val readId = state.readId ?: readRepository.insert(Read())
+            val tags = payload.map { rfid -> EpcUtils.toTag(rfid, readId) }
+            tagRepository.insertMany(tags)
+            state.copy(readId = readId)
+        }
+    }
+
+    // Actions
+    override fun onStart() {
         if (_job?.isActive == true) return
-        _isRunning.value = true
+
+        setRunning(true)
 
         _job = viewModelScope.launch {
             // collect from reader and forward quickly to the actor (trySend won't suspends)
@@ -160,35 +159,11 @@ class ReaderViewModel(
         reader.startReading()
     }
 
-    fun stopReading() {
+    override fun onStop() {
         reader.stopReading()
         _job?.cancel()
         _job = null
-        _isRunning.value = false
-    }
-
-    private suspend fun processBatch(payload: List<String>) {
-        val tags = payload.map { rfid -> Tag(rfid = rfid) }
-        repository.insertMany(tags)
-    }
-
-    private fun updateEpcs(list: List<String>) {
-        _snapshot.addAll(list)
-        _list.value = _snapshot.toList()
-    }
-
-    private fun resetEpcs() {
-        _snapshot.clear()
-        _list.value = _snapshot.toList()
-    }
-
-    // Actions
-    override fun onStart() {
-        startReading()
-    }
-
-    override fun onStop() {
-        stopReading()
+        setRunning(false)
     }
 
     override fun onSave() {
@@ -206,10 +181,28 @@ class ReaderViewModel(
         }
     }
 
+    // State
+    private fun setRunning(value: Boolean) {
+        _uiState.update { it.copy(isRunning = value) }
+    }
+
+    private fun updateEpcs(value: List<String>) {
+        _uiState.update { it.copy(epcs = it.epcs + value) }
+    }
+
+    private fun resetEpcs() {
+        _uiState.update { it.copy(epcs = emptyList()) }
+    }
+
+    private fun setReadId(value: Long) {
+        _uiState.update { it.copy(readId = value) }
+    }
+
 }
 
 data class ReaderUiState(
-    val epcs: List<String> = listOf<String>(),
+    val readId: Long? = null,
+    val epcs: List<String> = listOf(),
     val isRunning: Boolean = false
 ) {
     val counter: Int

@@ -6,21 +6,25 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import com.pedrozc90.prototype.data.db.BaseDao
 
 @Dao
-interface TagDao {
+interface TagDao : BaseDao<Tag, Long> {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insert(tag: Tag)
+    override suspend fun insert(entity: Tag): Long
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertMany(tags: List<Tag>)
 
     @Update
-    suspend fun update(tag: Tag)
+    override suspend fun update(entity: Tag): Int
 
     @Delete
-    suspend fun delete(tag: Tag)
+    override suspend fun delete(entity: Tag)
+
+    @Query("DELETE FROM reads")
+    suspend fun deleteAll()
 
     @Query("SELECT 1 FROM tags t WHERE t.rfid = :rfid LIMIT 1")
     suspend fun exists(rfid: String): Int

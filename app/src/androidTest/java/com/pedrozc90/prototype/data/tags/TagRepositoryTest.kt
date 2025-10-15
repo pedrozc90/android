@@ -6,10 +6,13 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.pedrozc90.prototype.data.Tag
 import com.pedrozc90.prototype.data.TagRepository
+import com.pedrozc90.prototype.data.db.DatabaseRule
 import com.pedrozc90.prototype.data.db.PrototypeDatabase
+import com.pedrozc90.prototype.data.db.RepositoryRule
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.system.measureTimeMillis
@@ -17,27 +20,16 @@ import kotlin.system.measureTimeMillis
 @RunWith(AndroidJUnit4::class)
 class TagRepositoryTest {
 
-    private lateinit var database: PrototypeDatabase
-    private lateinit var repository: TagRepository
+    @get:Rule
+    private var dbRule = DatabaseRule()
 
-    @Before
-    fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        database = Room.inMemoryDatabaseBuilder(context, PrototypeDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
-        repository = TagRepository(database.tagDao())
-    }
-
-    @After
-    @Throws(Exception::class)
-    fun cleanUp() {
-        database.close()
-    }
+    @get:Rule
+    private var repoRule = RepositoryRule(TagRepository::class, dbRule.db) { TagRepository(it.tagDao()) }
+    private val repository by lazy { repoRule.repo }
 
     @Test
     fun insertMany_Profiler() = runBlocking {
-        val tags = (1..100_000).map { Tag(rfid = "RFID_$it") }
+        val tags = (1..100_000).map { Tag(rfid = "RFID_$it", itemReference = "none", serialNumber = it.toLong()) }
         val time = measureTimeMillis {
             repository.insertMany(tags, size = 10_000)
         }
@@ -46,7 +38,7 @@ class TagRepositoryTest {
 
     @Test
     fun insertOne_Profiler() = runBlocking {
-        val tags = (1..100_000).map { Tag(rfid = "RFID_$it") }
+        val tags = (1..100_000).map { Tag(rfid = "RFID_$it", itemReference = "none", serialNumber = it.toLong()) }
         val time = measureTimeMillis {
             tags.forEach { tag ->
                 repository.insert(tag)
@@ -57,7 +49,7 @@ class TagRepositoryTest {
 
     @Test
     fun exists() = runBlocking {
-        val tag = Tag(rfid = "RFID_1")
+        val tag = Tag(rfid = "RFID_1", itemReference = "none", serialNumber = 1)
         repository.insert(tag)
         assert(repository.exists("RFID_1"))
         assert(!repository.exists("RFID_2"))

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.pedrozc90.prototype.data.ReadDao
 import com.pedrozc90.prototype.data.Tag
 import com.pedrozc90.prototype.data.TagDao
 import com.pedrozc90.prototype.data.read.Read
@@ -12,6 +13,8 @@ import com.pedrozc90.prototype.data.read.Read
 abstract class PrototypeDatabase : RoomDatabase() {
 
     abstract fun tagDao(): TagDao
+
+    abstract fun readDao(): ReadDao
 
     companion object {
 

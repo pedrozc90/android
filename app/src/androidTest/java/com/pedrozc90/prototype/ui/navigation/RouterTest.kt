@@ -34,7 +34,7 @@ class RouterTest {
 
     @Test
     fun router_verifyStartDestination() {
-        navController.assertCurrentRoute(Routes.HOME)
+        navController.assertCurrentRoute(Routes.Home)
     }
 
     @Test
@@ -46,7 +46,7 @@ class RouterTest {
     @Test
     fun router_clickAddButton_navigateToReaderScreen() {
         navigateToReaderScreen()
-        navController.assertCurrentRoute(Routes.READER)
+        navController.assertCurrentRoute(Routes.Reader)
         val addButton = composeTestRule.onNodeWithContentDescription("Add")
         addButton.assertDoesNotExist()
     }
@@ -54,11 +54,11 @@ class RouterTest {
     @Test
     fun router_clickGoBackButton_navigateToHomeScreen() {
         navigateToReaderScreen()
-        navController.assertCurrentRoute(Routes.READER)
+        navController.assertCurrentRoute(Routes.Reader)
         val button = composeTestRule.onNodeWithStringId(R.string.go_back)
         button.assertExists()
         button.performClick()
-        navController.assertCurrentRoute(Routes.HOME)
+        navController.assertCurrentRoute(Routes.Home)
     }
 
     private fun navigateToReaderScreen() {
