@@ -10,6 +10,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.pedrozc90.prototype.ui.screens.home.HomeScreen
 import com.pedrozc90.prototype.ui.screens.reader.ReaderScreen
+import com.pedrozc90.prototype.ui.screens.readings.ReadDetailsScreen
+import com.pedrozc90.prototype.ui.screens.readings.ReadListScreen
 import com.pedrozc90.prototype.ui.screens.settings.SettingsScreen
 
 @Composable
@@ -22,13 +24,16 @@ fun Router(
         startDestination = Routes.Home.route,
         modifier = modifier
     ) {
+        val onNavigateBack: () -> Unit = { navController.popBackStack() }
+        val onNavigateUp: () -> Unit = { navController.navigateUp() }
+
         composable(route = Routes.Home.route) {
             HomeScreen()
         }
 
         composable(route = Routes.Reader.route) {
             ReaderScreen(
-                navigateBack = { navController.navigateUp() }
+                onNavigateUp = onNavigateUp
             )
         }
 
@@ -37,15 +42,25 @@ fun Router(
         }
 
         // route with argument
-        composable(
-            route = Routes.ArticleDetails.route,
-            arguments = listOf(navArgument(Routes.ArticleDetails.ARG_ID) {
-                type = NavType.LongType
-            })
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getLong(Routes.ArticleDetails.ARG_ID)
-            Log.d("Router", "Article id: $id")
-            // ArticleDetailScreen(articleId = id)
+        composable(route = Routes.ReadList.route) {
+            ReadListScreen(
+                onNavigateToItem = { navController.navigate(Routes.ReadDetails.createRoute(it)) }
+            )
+        }
+
+        // route with argument
+        Routes.ReadDetails.let { route ->
+            composable(
+                route = route.route,
+                arguments = listOf(navArgument(route.ARG_ID) {
+                    type = NavType.LongType
+                })
+            ) { entry ->
+                val id = entry.arguments?.getLong(route.ARG_ID)
+                Log.d(route.route, "${ route.ARG_ID }: $id")
+                ReadDetailsScreen()
+            }
         }
     }
+
 }

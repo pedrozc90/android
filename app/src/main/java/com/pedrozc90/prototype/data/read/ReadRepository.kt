@@ -2,6 +2,7 @@ package com.pedrozc90.prototype.data
 
 import com.pedrozc90.prototype.data.db.PrototypeDatabase
 import com.pedrozc90.prototype.data.read.Read
+import com.pedrozc90.prototype.data.read.ReadSummary
 import com.pedrozc90.prototype.data.read.ReadWithTags
 import kotlinx.coroutines.flow.Flow
 
@@ -15,9 +16,11 @@ interface ReadBaseRepository {
 
     suspend fun deleteAll()
 
-    suspend fun fetch(): Flow<List<Read>>
+    fun fetch(): Flow<List<Read>>
 
-    suspend fun getReadWithTags(id: Long): Flow<ReadWithTags>
+    fun getReadWithTags(id: Long): Flow<ReadWithTags>
+
+    fun getSummary(): Flow<List<ReadSummary>>
 
 }
 
@@ -40,8 +43,10 @@ class ReadRepository(private val dao: ReadDao) : ReadBaseRepository {
 
     override suspend fun deleteAll() = dao.deleteAll()
 
-    override suspend fun fetch(): Flow<List<Read>> = dao.fetch()
+    override fun fetch(): Flow<List<Read>> = dao.fetch()
 
-    override suspend fun getReadWithTags(id: Long): Flow<ReadWithTags> = dao.getReadWithTags(id)
+    override fun getReadWithTags(id: Long): Flow<ReadWithTags> = dao.getReadWithTags(id)
+
+    override fun getSummary(): Flow<List<ReadSummary>> = dao.getSummary()
 
 }

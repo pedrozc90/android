@@ -49,7 +49,7 @@ fun SettingsScreen(
 }
 
 @Composable
-fun PotencySlider(
+private fun PotencySlider(
     state: SettingsUiState,
     onValueChange: (Float) -> Unit,
     onValueChangeFinished: () -> Unit,

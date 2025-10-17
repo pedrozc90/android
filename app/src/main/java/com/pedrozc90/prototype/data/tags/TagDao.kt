@@ -11,10 +11,10 @@ import com.pedrozc90.prototype.data.db.BaseDao
 @Dao
 interface TagDao : BaseDao<Tag, Long> {
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     override suspend fun insert(entity: Tag): Long
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertMany(tags: List<Tag>)
 
     @Update

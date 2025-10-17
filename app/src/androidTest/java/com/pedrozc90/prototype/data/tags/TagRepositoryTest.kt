@@ -6,9 +6,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.pedrozc90.prototype.data.Tag
 import com.pedrozc90.prototype.data.TagRepository
-import com.pedrozc90.prototype.data.db.DatabaseRule
+import com.pedrozc90.prototype.data.db.BaseDatabaseTest
 import com.pedrozc90.prototype.data.db.PrototypeDatabase
-import com.pedrozc90.prototype.data.db.RepositoryRule
+import com.pedrozc90.prototype.data.db.PrototypeDatabaseTest
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -18,14 +18,14 @@ import org.junit.runner.RunWith
 import kotlin.system.measureTimeMillis
 
 @RunWith(AndroidJUnit4::class)
-class TagRepositoryTest {
+class TagRepositoryTest : BaseDatabaseTest() {
 
-    @get:Rule
-    private var dbRule = DatabaseRule()
+    private lateinit var repository: TagRepository
 
-    @get:Rule
-    private var repoRule = RepositoryRule(TagRepository::class, dbRule.db) { TagRepository(it.tagDao()) }
-    private val repository by lazy { repoRule.repo }
+    @Before
+    fun setUp() {
+        repository = TagRepository(db.tagDao())
+    }
 
     @Test
     fun insertMany_Profiler() = runBlocking {

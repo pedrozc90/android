@@ -43,7 +43,7 @@ fun PrototypeApp(
     val entryState by navController.currentBackStackEntryAsState()
     val currentRoute = entryState?.destination?.route
         ?: navController.currentDestination?.route
-        ?: Routes.Home.route
+        ?: Routes.Home.route // "home"
     Log.d(TAG, "Current route: $currentRoute")
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)

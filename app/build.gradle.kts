@@ -73,9 +73,16 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.retrofit2.kotlinx.serialization.converter)
     implementation(libs.kotlinx.serialization.json)
+    implementation("com.squareup.okhttp3:logging-interceptor:5.2.1")
 
     // room
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
+
+//    // paging
+//    implementation(libs.androidx.paging.runtime)
+//    testImplementation(libs.androidx.paging.common)
+//    implementation(libs.androidx.paging.compose)
+//    implementation(libs.androidx.room.paging)
 }

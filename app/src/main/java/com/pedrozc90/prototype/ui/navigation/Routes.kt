@@ -33,6 +33,21 @@ sealed class Routes(
         icon = Icon(selected = Icons.Default.Home, unselected = Icons.Outlined.Home)
     )
 
+    object ReadList : Routes(
+        route = "readings",
+        title = R.string.readings,
+        icon = Icon(selected = Icons.Default.Home, unselected = Icons.Outlined.Home)
+    )
+
+    object ReadDetails : Routes(
+        route = "reads/{readId}",
+        title = R.string.read_details,
+        icon = null
+    ) {
+        const val ARG_ID = "readId"
+        fun createRoute(readId: Long) = "reads/${readId}"
+    }
+
     object Reader : Routes(
         route = "reader",
         title = R.string.reader,
@@ -42,26 +57,16 @@ sealed class Routes(
         )
     )
 
-    object Settings :
-        Routes(
-            route = "settings",
-            title = R.string.settings,
-            icon = Icon(selected = Icons.Default.Settings, unselected = Icons.Outlined.Settings)
-        )
-
-    object ArticleDetails : Routes(
-        route = "article/{articleId}",
-        title = R.string.app_name, // no title for details screen
-        icon = null
-    ) {
-        const val ARG_ID = "articleId"
-        fun createRoute(articleId: Long) = "article/${articleId}"
-    }
+    object Settings : Routes(
+        route = "settings",
+        title = R.string.settings,
+        icon = Icon(selected = Icons.Default.Settings, unselected = Icons.Outlined.Settings)
+    )
 
     companion object {
 
         val all by lazy { listOf(Home, Reader, Settings) }
-        val menu by lazy { listOf(Home, Reader) } // items to show in nav drawer/menu
+        val menu by lazy { listOf(Home, ReadList, Reader) } // items to show in nav drawer/menu
 
         fun find(route: String): Routes {
             return all.find { it.route == route } ?: Home

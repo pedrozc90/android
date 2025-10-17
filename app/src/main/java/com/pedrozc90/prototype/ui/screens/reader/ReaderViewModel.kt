@@ -3,8 +3,8 @@ package com.pedrozc90.prototype.ui.screens.reader
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pedrozc90.prototype.Constants
 import com.pedrozc90.prototype.data.ReadRepository
-import com.pedrozc90.prototype.data.Tag
 import com.pedrozc90.prototype.data.TagBaseRepository
 import com.pedrozc90.prototype.data.read.Read
 import com.pedrozc90.prototype.devices.FakeRfidReader
@@ -31,12 +31,11 @@ interface ReaderViewModelContract {
 }
 
 const val TAG = "ReaderViewModel"
-const val BATCH_SIZE = 15
-const val BATCH_TIMEOUT = 150L // ms
 
 private sealed class ActorCmd {
     data class Epc(val rfid: String) : ActorCmd()
     data class Flush(val ack: CompletableDeferred<Unit>) : ActorCmd()
+    object Stop : ActorCmd()
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -80,11 +79,11 @@ class ReaderViewModel(
 
         while (isActive) {
             // wait up to BATCH_TIMEOUT for the next command; if none arrives, timeout returns null
-            val cmd = withTimeoutOrNull(BATCH_TIMEOUT) { _channel.receive() }
+            val cmd = withTimeoutOrNull(Constants.BATCH_TIMEOUT) { _channel.receive() }
             if (cmd == null) {
                 val now = System.currentTimeMillis()
                 val elapsed = now - flushedAt
-                if (batch.isNotEmpty() && elapsed >= BATCH_TIMEOUT) {
+                if (batch.isNotEmpty() && elapsed >= Constants.BATCH_TIMEOUT) {
                     flush(now = now)
                 }
                 continue
@@ -95,10 +94,13 @@ class ReaderViewModel(
                     // deduplicate in-memory
                     if (_processed.add(cmd.rfid)) {
                         batch.add(cmd.rfid)
+                        _uiState.update { it.copy(inBatch = it.inBatch + 1) }
+                    } else {
+                        _uiState.update { it.copy(repeats = it.repeats + 1) }
                     }
 
                     // flush by size
-                    if (batch.size >= BATCH_SIZE) {
+                    if (batch.size >= Constants.BATCH_SIZE) {
                         flush()
                     }
                 }
@@ -108,6 +110,11 @@ class ReaderViewModel(
                     flush()
                     cmd.ack.complete(Unit)
                 }
+
+                is ActorCmd.Stop -> {
+                    flush()
+                    _uiState.update { it.copy(isStopping = false) }
+                }
             }
         }
 
@@ -115,10 +122,14 @@ class ReaderViewModel(
         if (batch.isNotEmpty()) {
             flush()
         }
+
+        // update state 'stopping' to 'false'
+        _uiState.update { it.copy(isStopping = false) }
     }
 
     // PUBLIC API: quickly enqueue an EPC (non-suspending attempt)
     fun enqueueEpc(epc: String) {
+        _uiState.update { it.copy(pending = it.pending + 1) }
         // try to send to actor without suspending; if the buffer is full, drop it
         val result = _channel.trySend(ActorCmd.Epc(rfid = epc))
         if (!result.isSuccess) {
@@ -135,12 +146,10 @@ class ReaderViewModel(
     }
 
     private suspend fun processBatch(payload: List<String>) {
-        _uiState.update { state ->
-            val readId = state.readId ?: readRepository.insert(Read())
-            val tags = payload.map { rfid -> EpcUtils.toTag(rfid, readId) }
-            tagRepository.insertMany(tags)
-            state.copy(readId = readId)
-        }
+        val readId = _uiState.value.readId ?: readRepository.insert(Read())
+        val tags = payload.map { rfid -> EpcUtils.toTag(rfid, readId) }
+        tagRepository.insertMany(tags)
+        setReadId(readId)
     }
 
     // Actions
@@ -163,7 +172,20 @@ class ReaderViewModel(
         reader.stopReading()
         _job?.cancel()
         _job = null
+        _uiState.update { it.copy(isStopping = true) }
         setRunning(false)
+        viewModelScope.launch {
+            try {
+                val ack = CompletableDeferred<Unit>()
+                _channel.send(ActorCmd.Flush(ack))
+                ack.await()
+                _channel.send(ActorCmd.Stop)
+            } catch (e: Exception) {
+                Log.w(TAG, "error while sending stop/flush", e)
+                // ensure isStopping cleared even if signaling failed
+                _uiState.update { it.copy(isStopping = false) }
+            }
+        }
     }
 
     override fun onSave() {
@@ -181,17 +203,30 @@ class ReaderViewModel(
         }
     }
 
+    // ensure we cleanup and stop consumer when ViewModel is cleared
+    override fun onCleared() {
+        super.onCleared()
+        try {
+            _channel.close()
+        } catch (e: Exception) {
+            Log.w(TAG, "channel close error", e)
+        }
+        _consumer.cancel()
+        _job?.cancel()
+        reader.stopReading()
+    }
+
     // State
     private fun setRunning(value: Boolean) {
         _uiState.update { it.copy(isRunning = value) }
     }
 
     private fun updateEpcs(value: List<String>) {
-        _uiState.update { it.copy(epcs = it.epcs + value) }
+        _uiState.update { it.copy(epcs = it.epcs + value, inBatch = 0) }
     }
 
     private fun resetEpcs() {
-        _uiState.update { it.copy(epcs = emptyList()) }
+        _uiState.update { it.copy(epcs = emptyList(), pending = 0, repeats = 0, inBatch = 0) }
     }
 
     private fun setReadId(value: Long) {
@@ -203,7 +238,11 @@ class ReaderViewModel(
 data class ReaderUiState(
     val readId: Long? = null,
     val epcs: List<String> = listOf(),
-    val isRunning: Boolean = false
+    val isRunning: Boolean = false,
+    val isStopping: Boolean = false,
+    val pending: Int = 0,
+    val repeats: Int = 0,
+    val inBatch: Int = 0
 ) {
     val counter: Int
         get() = epcs.size

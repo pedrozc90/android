@@ -15,11 +15,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.system.measureTimeMillis
 
-@RunWith(AndroidJUnit4::class)
-class PrototypeDatabaseTest {
+open class PrototypeDatabaseTest {
 
     private lateinit var database: PrototypeDatabase
-    private lateinit var repository: TagRepository
+    // private lateinit var repository: TagRepository
 
     @Before
     fun setUp() {
@@ -27,20 +26,7 @@ class PrototypeDatabaseTest {
         database = Room.inMemoryDatabaseBuilder(context, PrototypeDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        repository = TagRepository(database.tagDao())
-    }
-
-    @After
-    @Throws(Exception::class)
-    fun cleanUp() {
-        database.close()
-    }
-
-    @Test
-    fun validateDaos() = runBlocking {
-        assertNotNull(database)
-        assertNotNull(database.tagDao())
-        assertNotNull(database.readDao())
+        // repository = TagRepository(database.tagDao())
     }
 
 }

@@ -46,7 +46,7 @@ class ReaderScreenTest {
 
         composeTestRule.setContent {
             ReaderScreen(
-                navigateBack = {},
+                onNavigateUp = {},
                 model = fakeViewModel
             )
         }

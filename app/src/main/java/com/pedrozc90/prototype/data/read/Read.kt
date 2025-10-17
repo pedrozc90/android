@@ -33,6 +33,17 @@ data class Read(
 )
 
 data class ReadWithTags(
-    @Embedded val read: Read,
-    @Relation(parentColumn = "id", entityColumn = "read_id") val tags: List<Tag>
+    @Embedded
+    val read: Read,
+
+    @Relation(parentColumn = "id", entityColumn = "read_id")
+    val tags: List<Tag>
+)
+
+data class ReadSummary(
+    @Embedded
+    val read: Read,
+
+    @ColumnInfo(name = "tags_count")
+    val tagsCount: Int = 0
 )
