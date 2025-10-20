@@ -11,6 +11,7 @@ import com.pedrozc90.prototype.ui.screens.home.HomeViewModel
 import com.pedrozc90.prototype.ui.screens.reader.ReaderViewModel
 import com.pedrozc90.prototype.ui.screens.readings.ReadDetailsViewModel
 import com.pedrozc90.prototype.ui.screens.readings.ReadListViewModel
+import com.pedrozc90.prototype.ui.screens.scan.ScanViewModel
 import com.pedrozc90.prototype.ui.screens.settings.SettingsViewModel
 
 object AppViewModelProvider {
@@ -39,6 +40,11 @@ object AppViewModelProvider {
                 readRepository = container().readRepository,
                 savedStateHandle = this.createSavedStateHandle()
             )
+        }
+
+        // scan
+        initializer {
+            ScanViewModel(reader = container().reader)
         }
 
         // settings

@@ -43,6 +43,7 @@ fun PrototypeDrawer(
                 modifier = Modifier.padding(16.dp),
                 style = MaterialTheme.typography.titleLarge
             )
+
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             routes.forEachIndexed { index, route ->
@@ -56,9 +57,19 @@ fun PrototypeDrawer(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+            Routes.Scan.let { route ->
+                PrototypeDrawerItem(
+                    route = route,
+                    selected = route.route == currentRoute,
+                    onClick = { onClickItem(route) }
+                )
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
             Routes.Settings.let { route ->
                 PrototypeDrawerItem(
-                    route = Routes.Settings,
+                    route = route,
                     selected = route.route == currentRoute,
                     onClick = { onClickItem(route) }
                 )

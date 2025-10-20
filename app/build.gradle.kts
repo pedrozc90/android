@@ -79,6 +79,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
+    implementation(project(":rfid"))
 
 //    // paging
 //    implementation(libs.androidx.paging.runtime)

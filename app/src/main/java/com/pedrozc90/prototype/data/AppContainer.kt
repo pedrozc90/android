@@ -1,10 +1,11 @@
 package com.pedrozc90.prototype.data
 
 import android.content.Context
-import androidx.room.RoomDatabase
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.pedrozc90.prototype.data.db.PrototypeDatabase
 import com.pedrozc90.prototype.network.PrototypeApiService
+import com.pedrozc90.rfid.core.RfidDevice
+import com.pedrozc90.rfid.core.RfidManager
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import retrofit2.Retrofit
@@ -18,6 +19,8 @@ interface AppContainer {
     val database: PrototypeDatabase
     val tagRepository: TagRepository
     val readRepository: ReadRepository
+
+    val reader: RfidDevice
 
 }
 
@@ -54,6 +57,10 @@ class DefaultAppContainer(context: Context) : AppContainer {
 
     override val readRepository: ReadRepository by lazy {
         ReadRepository(database.readDao())
+    }
+
+    override val reader: RfidDevice by lazy {
+        RfidManager.factory(context)
     }
 
 }

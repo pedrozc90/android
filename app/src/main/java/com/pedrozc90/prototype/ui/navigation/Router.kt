@@ -12,6 +12,7 @@ import com.pedrozc90.prototype.ui.screens.home.HomeScreen
 import com.pedrozc90.prototype.ui.screens.reader.ReaderScreen
 import com.pedrozc90.prototype.ui.screens.readings.ReadDetailsScreen
 import com.pedrozc90.prototype.ui.screens.readings.ReadListScreen
+import com.pedrozc90.prototype.ui.screens.scan.ScanScreen
 import com.pedrozc90.prototype.ui.screens.settings.SettingsScreen
 
 @Composable
@@ -39,6 +40,10 @@ fun Router(
 
         composable(route = Routes.Settings.route) {
             SettingsScreen()
+        }
+
+        composable(route = Routes.Scan.route) {
+            ScanScreen()
         }
 
         // route with argument
