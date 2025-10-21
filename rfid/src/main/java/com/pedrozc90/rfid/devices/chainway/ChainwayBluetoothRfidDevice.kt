@@ -10,7 +10,7 @@ private const val TAG = "ChainwayBluetoothRfidDevice"
 
 class ChainwayBluetoothRfidDevice(context: Context) : ChainwayBaseRfidDevice(context) {
 
-    private lateinit var reader: RFIDWithUHFBLE
+    private var reader: RFIDWithUHFBLE = RFIDWithUHFBLE.getInstance()
 
     override suspend fun init(opts: RfidOptions) {
         try {
@@ -19,7 +19,6 @@ class ChainwayBluetoothRfidDevice(context: Context) : ChainwayBaseRfidDevice(con
                 throw IllegalArgumentException("MAC address is required in options")
             }
 
-            reader = RFIDWithUHFBLE.getInstance()
             reader.init(context)
             reader.connect(macAddress)
         } catch (e: Exception) {
@@ -60,6 +59,17 @@ class ChainwayBluetoothRfidDevice(context: Context) : ChainwayBaseRfidDevice(con
             Log.e(TAG, "Fail to stop inventory", e)
             false
         }
+    }
+
+    override suspend fun write(
+        pwd: String?,
+        bank: Int,
+        data: String,
+        ptr: Int,
+        length: Int,
+        filter: String?
+    ): Boolean {
+        return super.write(reader, pwd, bank, data, ptr, length, filter)
     }
 
     override suspend fun getVersion(): String? = reader.getVersion()

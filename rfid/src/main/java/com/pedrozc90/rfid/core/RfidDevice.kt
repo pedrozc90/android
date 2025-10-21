@@ -26,6 +26,15 @@ interface RfidDevice {
      */
     suspend fun stopInventory(): Boolean
 
+    suspend fun write(
+        pwd: String? = null,
+        bank: Int,
+        data: String,
+        ptr: Int = 0,
+        length: Int = 0,
+        filter: String? = null
+    ): Boolean
+
     suspend fun getVersion(): String?
 
     suspend fun getPower(): Int
