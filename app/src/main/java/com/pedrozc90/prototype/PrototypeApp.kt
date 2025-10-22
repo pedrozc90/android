@@ -33,7 +33,7 @@ import com.pedrozc90.prototype.ui.navigation.Routes
 import com.pedrozc90.prototype.ui.theme.PrototypeTheme
 import kotlinx.coroutines.launch
 
-const val TAG = "PrototypeApp"
+private const val TAG = "PrototypeApp"
 
 @Composable
 fun PrototypeApp(

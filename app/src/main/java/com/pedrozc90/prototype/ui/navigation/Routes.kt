@@ -2,9 +2,11 @@ package com.pedrozc90.prototype.ui.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SettingsInputAntenna
+import androidx.compose.material.icons.outlined.Bluetooth
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.SettingsInputAntenna
@@ -55,6 +57,12 @@ sealed class Routes(
             selected = Icons.Default.SettingsInputAntenna,
             unselected = Icons.Outlined.SettingsInputAntenna
         )
+    )
+
+    object Devices : Routes(
+        route = "devices",
+        title = R.string.devices,
+        icon = Icon(selected = Icons.Default.Bluetooth, unselected = Icons.Outlined.Bluetooth)
     )
 
     object Settings : Routes(

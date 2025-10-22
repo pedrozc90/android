@@ -14,4 +14,7 @@
     <string name="readings">Readings</string>
     <string name="id">ID</string>
     <string name="tags">Tags</string>
+    <string name="devices">Devices</string>
+    <string name="connecting">Connecting</string>
+    <string name="connected">Connected</string>
 </resources>

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.pedrozc90.prototype.PrototypeApplication
 import com.pedrozc90.prototype.data.AppContainer
+import com.pedrozc90.prototype.ui.screens.devices.DevicesViewModel
 import com.pedrozc90.prototype.ui.screens.home.HomeViewModel
 import com.pedrozc90.prototype.ui.screens.reader.ReaderViewModel
 import com.pedrozc90.prototype.ui.screens.readings.ReadDetailsViewModel
@@ -42,6 +43,13 @@ object AppViewModelProvider {
         }
 
         // settings
+        initializer {
+            DevicesViewModel(
+                bluetoothController = container().bluetoothController,
+                preferencesRepository = container().preferencesRepository
+            )
+        }
+
         initializer {
             SettingsViewModel(
                 tagRepository = container().tagRepository,

@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import com.pedrozc90.prototype.core.bluetooth.AndroidBluetoothController
+import com.pedrozc90.prototype.core.bluetooth.BluetoothController
 import com.pedrozc90.prototype.data.db.PrototypeDatabase
 import com.pedrozc90.prototype.data.local.PreferencesRepository
 import com.pedrozc90.prototype.network.PrototypeApiService
@@ -15,6 +17,9 @@ interface AppContainer {
 
     // data store
     val preferencesRepository: PreferencesRepository
+
+    // bluetooth
+    val bluetoothController: BluetoothController
 
     // web client
     val prototypeApiRepository: PrototypeApiRepository
@@ -59,6 +64,11 @@ class DefaultAppContainer(context: Context, dataStore: DataStore<Preferences>) :
 
     override val readRepository: ReadRepository by lazy {
         ReadRepository(database.readDao())
+    }
+
+    // bluetooth
+    override val bluetoothController: BluetoothController by lazy {
+        AndroidBluetoothController(context)
     }
 
     // data store

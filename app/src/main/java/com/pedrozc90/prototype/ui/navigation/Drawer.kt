@@ -56,9 +56,17 @@ fun PrototypeDrawer(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+            Routes.Devices.let { route ->
+                PrototypeDrawerItem(
+                    route = route,
+                    selected = route.route == currentRoute,
+                    onClick = { onClickItem(route) }
+                )
+            }
+
             Routes.Settings.let { route ->
                 PrototypeDrawerItem(
-                    route = Routes.Settings,
+                    route = route,
                     selected = route.route == currentRoute,
                     onClick = { onClickItem(route) }
                 )

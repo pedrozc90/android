@@ -36,8 +36,7 @@ fun SettingsScreen(
     ) {
         PotencySlider(
             state = state,
-            onValueChange = { model.setPotency(it) },
-            onValueChangeFinished = { model.persistSettings() }
+            onValueChange = { model.setPotency(it) }
         )
 
         Button(
@@ -52,7 +51,6 @@ fun SettingsScreen(
 private fun PotencySlider(
     state: SettingsUiState,
     onValueChange: (Float) -> Unit,
-    onValueChangeFinished: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val potencyLabel = stringResource(R.string.potency)
@@ -63,7 +61,7 @@ private fun PotencySlider(
         valueRange = 0f..100f,
         steps = 99, // max value is divided by steps + 1
         onValueChange = onValueChange,
-        onValueChangeFinished = onValueChangeFinished,
+        // onValueChangeFinished = onValueChangeFinished,
         modifier = modifier
     )
 }
