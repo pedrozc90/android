@@ -3,35 +3,41 @@ package com.pedrozc90.prototype.ui.screens.settings
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pedrozc90.prototype.Constants
 import com.pedrozc90.prototype.data.ReadRepository
 import com.pedrozc90.prototype.data.TagRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import com.pedrozc90.prototype.data.local.PreferencesRepository
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 const val TAG = "SettingsViewModel"
 
 class SettingsViewModel(
     private val tagRepository: TagRepository,
-    private val readRepository: ReadRepository
+    private val readRepository: ReadRepository,
+    private val preferencesRepository: PreferencesRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SettingsUiState())
-    val uiState = _uiState.asStateFlow()
+    // private val _uiState = MutableStateFlow(SettingsUiState())
+    val uiState = preferencesRepository.getPotency()
+        .map { potency -> SettingsUiState(potency = potency) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(Constants.STATE_TIMEOUT),
+            initialValue = runBlocking {
+                SettingsUiState(
+                    potency = preferencesRepository.getPotency().first()
+                )
+            }
+        )
 
     fun setPotency(value: Float) {
-        _uiState.update { it.copy(potency = value) }
-    }
-
-    fun persistSettings() {
         viewModelScope.launch {
-            try {
-                val state = _uiState.value
-                Log.d(TAG, "Settings persisted: $state")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error persisting settings", e)
-            }
+            preferencesRepository.setPotency(value)
         }
     }
 

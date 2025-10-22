@@ -1,15 +1,20 @@
 package com.pedrozc90.prototype.data
 
 import android.content.Context
-import androidx.room.RoomDatabase
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.pedrozc90.prototype.data.db.PrototypeDatabase
+import com.pedrozc90.prototype.data.local.PreferencesRepository
 import com.pedrozc90.prototype.network.PrototypeApiService
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import retrofit2.Retrofit
 
 interface AppContainer {
+
+    // data store
+    val preferencesRepository: PreferencesRepository
 
     // web client
     val prototypeApiRepository: PrototypeApiRepository
@@ -21,7 +26,7 @@ interface AppContainer {
 
 }
 
-class DefaultAppContainer(context: Context) : AppContainer {
+class DefaultAppContainer(context: Context, dataStore: DataStore<Preferences>) : AppContainer {
 
     private val baseUrl = "http://localhost:4000/android/"
 
@@ -54,6 +59,11 @@ class DefaultAppContainer(context: Context) : AppContainer {
 
     override val readRepository: ReadRepository by lazy {
         ReadRepository(database.readDao())
+    }
+
+    // data store
+    override val preferencesRepository: PreferencesRepository by lazy {
+        PreferencesRepository(dataStore)
     }
 
 }

@@ -45,7 +45,8 @@ object AppViewModelProvider {
         initializer {
             SettingsViewModel(
                 tagRepository = container().tagRepository,
-                readRepository = container().readRepository
+                readRepository = container().readRepository,
+                preferencesRepository = container().preferencesRepository
             )
         }
     }
