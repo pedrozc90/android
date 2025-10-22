@@ -37,10 +37,7 @@ interface ReadDao : BaseDao<Read, Long> {
     @Transaction
     @Query(
         """
-        SELECT
-            r.*,
-            t.*
-        FROM reads r
+        SELECT * FROM reads r
         LEFT JOIN tags t ON t.read_id = r.id
         WHERE r.id = :id 
         ORDER BY t.item_reference ASC, t.serial_number ASC

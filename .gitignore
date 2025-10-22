@@ -9,3 +9,6 @@ build
 captures
 .externalNativeBuild
 .cxx
+
+# Android Database Export
+app/schemas/

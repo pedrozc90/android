@@ -19,6 +19,7 @@ import java.util.UUID
         )
     ],
     indices = [
+        Index(name = "tags_read_id_idx", value = [ "read_id" ]),
         Index(name = "tags_uuid_uk", value = [ "uuid" ], unique = true),
         Index(name = "reads_rfid_read_id_uk", value = [ "rfid", "read_id" ], unique = true)
     ]
