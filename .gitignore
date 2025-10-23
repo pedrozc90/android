@@ -1,2 +1,11 @@
+# IntelliJ
 .idea/
 *.iml
+
+# Android Studio
+.gradle
+local.properties
+build
+captures
+.externalNativeBuild
+.cxx
