@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Prototype</string>
+
+    <!-- HOME -->
+    <string name="home">Home</string>
+
+    <!-- SETTINGS -->
+    <string name="settings">Settings</string>
 </resources>

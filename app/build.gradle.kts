@@ -58,4 +58,14 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // material
+    implementation(libs.androidx.compose.material.icons.extended)
+
+    // view model
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    // navigation
+    implementation(libs.androidx.navigation.compose)
+    androidTestImplementation(libs.androidx.navigation.testing)
 }
