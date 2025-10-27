@@ -34,7 +34,10 @@ fun Router(
         }
 
         composable(route = Routes.Settings.route) {
-            SettingsScreen()
+            SettingsScreen(
+                onNavigateBack = onNavigateBack,
+                onNavigateUp = onNavigateUp
+            )
         }
 
         composable(route = Routes.Products.route) {
@@ -49,10 +52,6 @@ fun Router(
             )
         }
 
-        Routes.ProductEntry.let { route ->
-            composable(route = route.route) { entry ->
-                ProductEntryScreen(onNavigateBack = onNavigateBack)
-            }
         composable(route = Routes.ProductEntry.route) { entry ->
             ProductEntryScreen(
                 onNavigateBack = onNavigateBack,

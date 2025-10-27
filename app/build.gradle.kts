@@ -64,6 +64,9 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
+    // data store
+    implementation(libs.androidx.datastore.preferences)
+
     // material
     implementation(libs.androidx.compose.material.icons.extended)
 

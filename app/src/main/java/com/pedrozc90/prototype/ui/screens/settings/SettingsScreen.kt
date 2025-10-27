@@ -2,30 +2,53 @@ package com.pedrozc90.prototype.ui.screens.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pedrozc90.prototype.R
 import com.pedrozc90.prototype.core.di.AppViewModelProvider
 import com.pedrozc90.prototype.ui.theme.PrototypeTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
+    onNavigateBack: () -> Unit,
+    onNavigateUp: () -> Unit,
     viewModel: SettingsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val state = viewModel.uiState
+    val coroutineScope = rememberCoroutineScope()
 
     SettingsContent(
         state = state,
+        onValueChange = {
+            coroutineScope.launch {
+                viewModel.update(it)
+            }
+        },
+        onSaveClick = {
+            coroutineScope.launch {
+                viewModel.onSave()
+                onNavigateUp()
+            }
+        },
         modifier = modifier
     )
 }
@@ -33,25 +56,104 @@ fun SettingsScreen(
 @Composable
 private fun SettingsContent(
     state: SettingsUiState,
+    onValueChange: (SettingsUiState) -> Unit,
+    onSaveClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.spacedBy(space = dimensionResource(R.dimen.padding_medium)),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .fillMaxSize()
+            .padding(dimensionResource(R.dimen.padding_medium))
+    ) {
+        SettingsHeader()
+        SettingsBody(
+            state = state,
+            onValueChange = onValueChange,
+            onSaveClick = onSaveClick
+        )
+    }
+}
+
+@Composable
+private fun SettingsHeader(
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = stringResource(R.string.settings),
+        style = MaterialTheme.typography.titleLarge,
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsBody(
+    state: SettingsUiState,
+    onValueChange: (SettingsUiState) -> Unit,
+    onSaveClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .fillMaxSize()
     ) {
-        Text(
-            text = stringResource(R.string.settings),
-            style = MaterialTheme.typography.titleLarge
+        TextField(
+            enabled = true,
+            label = {
+                Text(text = "Device")
+            },
+            value = state.device,
+            onValueChange = { onValueChange(state.copy(device = it)) },
+            modifier = Modifier.fillMaxWidth()
         )
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Value: ${state.value}%",
+                modifier = Modifier.fillMaxWidth()
+            )
+            Slider(
+                value = state.value.toFloat(),
+                valueRange = 0f..100f,
+                steps = 99, // max value is divided by steps + 1
+                onValueChange = { onValueChange(state.copy(value = it.toInt())) },
+                // onValueChangeFinished = onValueChangeFinished,
+                modifier = Modifier
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Button(
+            enabled = state.device.isNotBlank(),
+            onClick = onSaveClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = stringResource(R.string.save))
+        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun SettingsScreenPreview() {
+    val state = SettingsUiState(
+        device = "00:11:22:33:44:55",
+        value = 50
+    )
     PrototypeTheme {
-        SettingsContent(state = SettingsUiState())
+        SettingsContent(
+            state = state,
+            onValueChange = {},
+            onSaveClick = {}
+        )
     }
 }

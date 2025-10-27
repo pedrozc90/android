@@ -1,11 +1,17 @@
 package com.pedrozc90.prototype.core.di
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import com.pedrozc90.prototype.data.db.PrototypeDatabase
+import com.pedrozc90.prototype.data.local.PreferencesRepository
 import com.pedrozc90.prototype.domain.repositories.ProductRepository
 import com.pedrozc90.prototype.domain.repositories.TagRepository
 
 interface AppContainer {
+
+    // data store
+    val preferences: PreferencesRepository
 
     // room
     val database: PrototypeDatabase
@@ -14,7 +20,12 @@ interface AppContainer {
 
 }
 
-class DefaultAppContainer(context: Context) : AppContainer {
+class DefaultAppContainer(context: Context, dataStore: DataStore<Preferences>) : AppContainer {
+
+    // data store
+    override val preferences: PreferencesRepository by lazy {
+        PreferencesRepository(ds = dataStore)
+    }
 
     // room
     override val database: PrototypeDatabase by lazy {
@@ -22,11 +33,11 @@ class DefaultAppContainer(context: Context) : AppContainer {
     }
 
     override val tagRepository: TagRepository by lazy {
-        TagRepository(database.tagDao())
+        TagRepository(dao = database.tagDao())
     }
 
     override val productRepository: ProductRepository by lazy {
-        ProductRepository(database.productDao())
+        ProductRepository(dao = database.productDao())
     }
 
 }

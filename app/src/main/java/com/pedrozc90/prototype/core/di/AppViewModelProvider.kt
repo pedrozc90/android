@@ -22,7 +22,9 @@ object AppViewModelProvider {
 
         // settings
         initializer {
-            SettingsViewModel()
+            SettingsViewModel(
+                preferences = container().preferences
+            )
         }
 
         // products
