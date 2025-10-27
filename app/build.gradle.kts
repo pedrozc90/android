@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp") version "2.2.20-2.0.3"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.20"
 }
 
 android {
@@ -57,6 +58,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -81,4 +83,12 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
+
+    // retrofit
+    implementation(libs.okhttp)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit2.kotlinx.serialization.converter)
+    implementation(libs.kotlinx.serialization.json)
+    implementation("com.squareup.okhttp3:logging-interceptor:5.2.1")
+    testImplementation(kotlin("test"))
 }

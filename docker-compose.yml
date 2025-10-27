@@ -1,0 +1,13 @@
+services:
+    wiremock:
+        image: wiremock/wiremock:3x-alpine
+        container_name: wiremock
+        hostname: wiremock
+        restart: unless-stopped
+        ports:
+            - "4100:8080"
+        volumes:
+            - ./docs/.mock/mappings:/home/wiremock/mappings
+            - ./docs/.mock/__files:/home/wiremock/__files
+        command:
+            - "--verbose"

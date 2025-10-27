@@ -11,9 +11,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.pedrozc90.prototype.ui.screens.home.HomeScreen
+import com.pedrozc90.prototype.ui.screens.login.LoginScreen
 import com.pedrozc90.prototype.ui.screens.products.ProductDetailsScreen
 import com.pedrozc90.prototype.ui.screens.products.ProductEntryScreen
 import com.pedrozc90.prototype.ui.screens.products.ProductListScreen
+import com.pedrozc90.prototype.ui.screens.products.ProductRemoteScreen
 import com.pedrozc90.prototype.ui.screens.settings.SettingsScreen
 
 @Composable
@@ -40,6 +42,16 @@ fun Router(
             )
         }
 
+        composable(route = Routes.Login.route) {
+            LoginScreen(
+                onNavigateBack = onNavigateBack,
+                onNavigateUp = onNavigateUp,
+                onNavigateToHome = {
+                    navController.navigate(Routes.Home.route)
+                }
+            )
+        }
+
         composable(route = Routes.Products.route) {
             ProductListScreen(
                 onNavigateToItem = { product ->
@@ -52,7 +64,14 @@ fun Router(
             )
         }
 
-        composable(route = Routes.ProductEntry.route) { entry ->
+        composable(route = Routes.ProductRemote.route) {
+            ProductRemoteScreen(
+                onNavigateToItem = { },
+                onNavigateToNewItem = { }
+            )
+        }
+
+        composable(route = Routes.ProductEntry.route) {
             ProductEntryScreen(
                 onNavigateBack = onNavigateBack,
                 onNavigateUp = onNavigateUp

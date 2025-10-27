@@ -3,9 +3,13 @@ package com.pedrozc90.prototype.ui.navigation
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Token
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Login
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Token
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.pedrozc90.prototype.R
 
@@ -37,22 +41,32 @@ sealed class Routes(
         icon = Icon(selected = Icons.Default.Settings, unselected = Icons.Outlined.Settings)
     )
 
+    object Login : Routes(
+        route = "login",
+        title = R.string.login,
+        icon = Icon(selected = Icons.Default.Login, unselected = Icons.Outlined.Login)
+    )
+
     object Products : Routes(
         route = "products",
         title = R.string.products,
         icon = Icon(selected = Icons.Default.Home, unselected = Icons.Outlined.Home)
     )
 
-    object ProductEntry: Routes(
+    object ProductRemote : Routes(
+        route = "products/remote",
+        title = R.string.products_remote,
+        icon = Icon(selected = Icons.Default.Token, unselected = Icons.Outlined.Token)
+    )
+
+    object ProductEntry : Routes(
         route = "products/entry",
-        title = R.string.products_entry,
-        icon = null
+        title = R.string.products_entry
     )
 
     object ProductDetails : Routes(
         route = "products/{productId}",
-        title = R.string.products_details,
-        icon = null
+        title = R.string.products_details
     ) {
         const val ARG_ID = "productId"
         fun createRoute(productId: Long) = "products/${productId}"
@@ -60,8 +74,27 @@ sealed class Routes(
 
     companion object {
 
-        val all by lazy { listOf(Home, Settings, Products, ProductDetails) }
-        val menu by lazy { listOf(Home, Products) } // items to show in nav drawer/menu
+        val all by lazy {
+            listOf(
+                Home,
+                Login,
+                Products,
+                ProductEntry,
+                ProductRemote,
+                ProductDetails,
+                Settings
+            )
+        }
+
+        // items to show in nav drawer/menu
+        val menu by lazy {
+            listOf(
+                Home,
+                Login,
+                Products,
+                ProductRemote
+            )
+        }
 
         fun find(route: String): Routes {
             return all.find { it.route == route } ?: Home

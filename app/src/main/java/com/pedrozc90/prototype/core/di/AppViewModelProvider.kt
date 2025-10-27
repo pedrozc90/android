@@ -7,9 +7,11 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.pedrozc90.prototype.PrototypeApplication
 import com.pedrozc90.prototype.ui.screens.home.HomeViewModel
+import com.pedrozc90.prototype.ui.screens.login.LoginViewModel
 import com.pedrozc90.prototype.ui.screens.products.ProductDetailsViewModel
 import com.pedrozc90.prototype.ui.screens.products.ProductEntryViewModel
 import com.pedrozc90.prototype.ui.screens.products.ProductListViewModel
+import com.pedrozc90.prototype.ui.screens.products.ProductRemoteViewModel
 import com.pedrozc90.prototype.ui.screens.settings.SettingsViewModel
 
 object AppViewModelProvider {
@@ -27,10 +29,24 @@ object AppViewModelProvider {
             )
         }
 
+        // login
+        initializer {
+            LoginViewModel(
+                preferences = container().preferences,
+                repository = container().remote
+            )
+        }
+
         // products
         initializer {
             ProductListViewModel(
                 repository = container().productRepository
+            )
+        }
+
+        initializer {
+            ProductRemoteViewModel(
+                repository = container().remote
             )
         }
 

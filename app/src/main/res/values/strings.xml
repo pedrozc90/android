@@ -16,4 +16,11 @@
     <string name="size">Size</string>
     <string name="color">Color</string>
     <string name="products_entry">New Product</string>
+    <string name="products_remote">Products Remote</string>
+
+    <!-- LOGIN -->
+    <string name="login">Login</string>
+    <string name="logout">Logout</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
 </resources>

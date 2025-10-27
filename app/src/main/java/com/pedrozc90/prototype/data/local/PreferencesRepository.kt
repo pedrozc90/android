@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.pedrozc90.prototype.ui.screens.login.LoginUiState
 import com.pedrozc90.prototype.ui.screens.settings.SettingsUiState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -20,8 +21,45 @@ class PreferencesRepository(
 ) {
 
     companion object {
+        // Login
+        private val TOKEN = stringPreferencesKey("token")
+        private val USERNAME = stringPreferencesKey("username")
+        private val PASSWORD = stringPreferencesKey("password")
+
+        // Settings
         private val DEVICE = stringPreferencesKey("device")
         private val POTENCY = intPreferencesKey("potency")
+    }
+
+    // Login
+    fun getLoginUiState(): Flow<LoginUiState> {
+        return ds.data
+            .catch {
+                if (it is IOException) {
+                    Log.d(TAG, "Error reading login preferences", it)
+                    emit(emptyPreferences())
+                } else {
+                    throw it
+                }
+            }
+            .map {
+                LoginUiState(
+                    username = it[USERNAME] ?: "",
+                    password = it[PASSWORD] ?: "",
+                    token = it[TOKEN],
+                    isValid = true
+                )
+            }
+    }
+
+    suspend fun update(state: LoginUiState) {
+        ds.edit { prefs ->
+            prefs[USERNAME] = state.username
+            prefs[PASSWORD] = state.password
+            state.token?.let { token ->
+                prefs[TOKEN] = token
+            }
+        }
     }
 
     // Settings

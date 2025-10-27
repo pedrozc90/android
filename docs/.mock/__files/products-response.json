@@ -1,0 +1,18 @@
+{
+    "products": [
+        {
+            "id": 1,
+            "uuid": "00000000-0000-0000-0000-000000000000",
+            "item_reference": "10101010",
+            "description": "Sanity Check"
+        },
+        {
+            "id": 2,
+            "uuid": "11111111-1111-1111-1111-111111111111",
+            "item_reference": "11111111",
+            "description": "Sanity Check",
+            "size": "Large",
+            "color": "Red"
+        }
+    ]
+}
