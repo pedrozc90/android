@@ -1,11 +1,15 @@
 package com.pedrozc90.prototype.core.di
 
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.pedrozc90.prototype.PrototypeApplication
 import com.pedrozc90.prototype.ui.screens.home.HomeViewModel
+import com.pedrozc90.prototype.ui.screens.products.ProductDetailsViewModel
+import com.pedrozc90.prototype.ui.screens.products.ProductEntryViewModel
+import com.pedrozc90.prototype.ui.screens.products.ProductListViewModel
 import com.pedrozc90.prototype.ui.screens.settings.SettingsViewModel
 
 object AppViewModelProvider {
@@ -19,6 +23,26 @@ object AppViewModelProvider {
         // settings
         initializer {
             SettingsViewModel()
+        }
+
+        // products
+        initializer {
+            ProductListViewModel(
+                repository = container().productRepository
+            )
+        }
+
+        initializer {
+            ProductEntryViewModel(
+                repository = container().productRepository
+            )
+        }
+
+        initializer {
+            ProductDetailsViewModel(
+                savedStateHandle = this.createSavedStateHandle(),
+                repository = container().productRepository
+            )
         }
     }
 

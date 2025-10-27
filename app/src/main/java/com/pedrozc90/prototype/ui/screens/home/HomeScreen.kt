@@ -20,9 +20,9 @@ import com.pedrozc90.prototype.ui.theme.PrototypeTheme
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    model: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
-    val state by model.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsState()
 
     HomeContent(
         state = state,

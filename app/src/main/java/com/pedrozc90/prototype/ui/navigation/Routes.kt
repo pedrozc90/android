@@ -37,10 +37,31 @@ sealed class Routes(
         icon = Icon(selected = Icons.Default.Settings, unselected = Icons.Outlined.Settings)
     )
 
+    object Products : Routes(
+        route = "products",
+        title = R.string.products,
+        icon = Icon(selected = Icons.Default.Home, unselected = Icons.Outlined.Home)
+    )
+
+    object ProductEntry: Routes(
+        route = "products/entry",
+        title = R.string.products_entry,
+        icon = null
+    )
+
+    object ProductDetails : Routes(
+        route = "products/{productId}",
+        title = R.string.products_details,
+        icon = null
+    ) {
+        const val ARG_ID = "productId"
+        fun createRoute(productId: Long) = "products/${productId}"
+    }
+
     companion object {
 
-        val all by lazy { listOf(Home, Settings) }
-        val menu by lazy { listOf(Home) } // items to show in nav drawer/menu
+        val all by lazy { listOf(Home, Settings, Products, ProductDetails) }
+        val menu by lazy { listOf(Home, Products) } // items to show in nav drawer/menu
 
         fun find(route: String): Routes {
             return all.find { it.route == route } ?: Home
