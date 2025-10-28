@@ -17,9 +17,9 @@ import com.pedrozc90.prototype.ui.theme.PrototypeTheme
 import com.pedrozc90.rfid.objects.TagMetadata
 
 @Composable
-fun InventoryBasicScreen(
+fun InventoryBatchScreen(
     modifier: Modifier = Modifier,
-    viewModel: InventoryBasicViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    viewModel: InventoryBatchViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -35,7 +35,7 @@ fun InventoryBasicScreen(
         state = state,
         onStart = { viewModel.start() },
         onStop = { viewModel.stop() },
-        onSave = { viewModel.persist() },
+        onSave = { viewModel.save() },
         modifier = modifier
     )
 }

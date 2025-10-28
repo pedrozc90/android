@@ -55,6 +55,12 @@ sealed class Routes(
         icon = Icon(selected = Icons.Default.Inventory, unselected = Icons.Outlined.Inventory)
     )
 
+    object InventoryBatch : Routes(
+        route = "inventory/batch",
+        title = R.string.inventory_batch,
+        icon = Icon(selected = Icons.Default.Inventory, unselected = Icons.Outlined.Inventory)
+    )
+
     object Products : Routes(
         route = "products",
         title = R.string.products,
@@ -91,6 +97,7 @@ sealed class Routes(
                 ProductRemote,
                 ProductDetails,
                 Inventory,
+                InventoryBatch,
                 Settings
             )
         }
@@ -102,7 +109,8 @@ sealed class Routes(
                 Login,
                 Products,
                 ProductRemote,
-                Inventory
+                Inventory,
+                InventoryBatch
             )
         }
 

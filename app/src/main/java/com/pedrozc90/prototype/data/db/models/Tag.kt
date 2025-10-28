@@ -2,14 +2,25 @@ package com.pedrozc90.prototype.data.db.models
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.util.UUID
 
 @Entity(
     tableName = "tags",
+    foreignKeys = [
+        ForeignKey(
+            entity = Inventory::class,
+            parentColumns = ["id"],
+            childColumns = ["inventory_id"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
     indices = [
-        Index(name = "tags_uuid_uk", value = ["uuid"], unique = true)
+        Index(name = "tags_uuid_uk", value = ["uuid"], unique = true),
+        Index(name = "tags_inventory_id_idx", value = ["inventory_id"]),
+        Index(name = "tags_rfid_inventory_id_uk", value = ["rfid", "inventory_id"], unique = true)
     ]
 )
 data class Tag(
@@ -36,4 +47,7 @@ data class Tag(
 
     @ColumnInfo(name = "serial_number")
     val serialNumber: Long,
+
+    @ColumnInfo(name = "inventory_id")
+    val inventoryId: Long? = null
 )

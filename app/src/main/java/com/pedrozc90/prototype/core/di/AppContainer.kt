@@ -9,6 +9,7 @@ import com.pedrozc90.prototype.data.local.PreferencesRepository
 import com.pedrozc90.prototype.data.web.ApiRepository
 import com.pedrozc90.prototype.data.web.ApiService
 import com.pedrozc90.prototype.data.web.RemoteRepository
+import com.pedrozc90.prototype.domain.repositories.InventoryRepository
 import com.pedrozc90.prototype.domain.repositories.ProductRepository
 import com.pedrozc90.prototype.domain.repositories.TagRepository
 import kotlinx.serialization.json.Json
@@ -24,6 +25,7 @@ interface AppContainer {
     val database: PrototypeDatabase
     val tagRepository: TagRepository
     val productRepository: ProductRepository
+    val inventoryRepository: InventoryRepository
 
     // retrofit
     val remote: ApiRepository
@@ -47,6 +49,10 @@ class DefaultAppContainer(context: Context, dataStore: DataStore<Preferences>) :
 
     override val productRepository: ProductRepository by lazy {
         ProductRepository(dao = database.productDao())
+    }
+
+    override val inventoryRepository: InventoryRepository by lazy {
+        InventoryRepository(dao = database.inventoryDao())
     }
 
     // retrofit

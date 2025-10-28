@@ -26,6 +26,7 @@
 
     <!-- INVENTORY -->
     <string name="inventory">Inventory</string>
+    <string name="inventory_batch">Inventory Batch</string>
     <string name="start">Start</string>
     <string name="stop">Stop</string>
 </resources>
