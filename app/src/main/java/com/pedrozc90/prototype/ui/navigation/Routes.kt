@@ -3,10 +3,12 @@ package com.pedrozc90.prototype.ui.navigation
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Token
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Inventory
 import androidx.compose.material.icons.outlined.Login
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Token
@@ -47,6 +49,12 @@ sealed class Routes(
         icon = Icon(selected = Icons.Default.Login, unselected = Icons.Outlined.Login)
     )
 
+    object Inventory : Routes(
+        route = "inventory",
+        title = R.string.inventory,
+        icon = Icon(selected = Icons.Default.Inventory, unselected = Icons.Outlined.Inventory)
+    )
+
     object Products : Routes(
         route = "products",
         title = R.string.products,
@@ -82,6 +90,7 @@ sealed class Routes(
                 ProductEntry,
                 ProductRemote,
                 ProductDetails,
+                Inventory,
                 Settings
             )
         }
@@ -92,7 +101,8 @@ sealed class Routes(
                 Home,
                 Login,
                 Products,
-                ProductRemote
+                ProductRemote,
+                Inventory
             )
         }
 

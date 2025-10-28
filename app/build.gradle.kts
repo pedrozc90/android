@@ -91,4 +91,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation("com.squareup.okhttp3:logging-interceptor:5.2.1")
     testImplementation(kotlin("test"))
+
+    // custom lib
+    implementation(project(":rfid"))
 }

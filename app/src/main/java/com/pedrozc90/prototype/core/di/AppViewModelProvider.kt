@@ -12,6 +12,7 @@ import com.pedrozc90.prototype.ui.screens.products.ProductDetailsViewModel
 import com.pedrozc90.prototype.ui.screens.products.ProductEntryViewModel
 import com.pedrozc90.prototype.ui.screens.products.ProductListViewModel
 import com.pedrozc90.prototype.ui.screens.products.ProductRemoteViewModel
+import com.pedrozc90.prototype.ui.screens.inventory.InventoryViewModel
 import com.pedrozc90.prototype.ui.screens.settings.SettingsViewModel
 
 object AppViewModelProvider {
@@ -35,6 +36,11 @@ object AppViewModelProvider {
                 preferences = container().preferences,
                 repository = container().remote
             )
+        }
+
+        // scanner
+        initializer {
+            InventoryViewModel()
         }
 
         // products

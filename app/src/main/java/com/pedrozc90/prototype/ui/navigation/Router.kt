@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.pedrozc90.prototype.ui.screens.home.HomeScreen
+import com.pedrozc90.prototype.ui.screens.inventory.InventoryBasicScreen
 import com.pedrozc90.prototype.ui.screens.login.LoginScreen
 import com.pedrozc90.prototype.ui.screens.products.ProductDetailsScreen
 import com.pedrozc90.prototype.ui.screens.products.ProductEntryScreen
@@ -31,10 +32,12 @@ fun Router(
         val onNavigateBack: () -> Unit = { navController.popBackStack() }
         val onNavigateUp: () -> Unit = { navController.navigateUp() }
 
+        // Home
         composable(route = Routes.Home.route) {
             HomeScreen()
         }
 
+        // Settings
         composable(route = Routes.Settings.route) {
             SettingsScreen(
                 onNavigateBack = onNavigateBack,
@@ -42,6 +45,12 @@ fun Router(
             )
         }
 
+        // Inventory
+        composable(route = Routes.Inventory.route) {
+            InventoryBasicScreen()
+        }
+
+        // Login
         composable(route = Routes.Login.route) {
             LoginScreen(
                 onNavigateBack = onNavigateBack,
@@ -52,6 +61,7 @@ fun Router(
             )
         }
 
+        // Products
         composable(route = Routes.Products.route) {
             ProductListScreen(
                 onNavigateToItem = { product ->

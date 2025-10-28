@@ -23,4 +23,9 @@
     <string name="logout">Logout</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
+
+    <!-- INVENTORY -->
+    <string name="inventory">Inventory</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
 </resources>
