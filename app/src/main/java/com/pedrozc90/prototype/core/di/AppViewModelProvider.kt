@@ -6,6 +6,8 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.pedrozc90.prototype.PrototypeApplication
+import com.pedrozc90.prototype.ui.screens.debug.DebugViewModel
+import com.pedrozc90.prototype.ui.screens.devices.DevicesViewModel
 import com.pedrozc90.prototype.ui.screens.home.HomeViewModel
 import com.pedrozc90.prototype.ui.screens.inventory.InventoryBasicViewModel
 import com.pedrozc90.prototype.ui.screens.inventory.InventoryBatchViewModel
@@ -15,6 +17,7 @@ import com.pedrozc90.prototype.ui.screens.products.ProductEntryViewModel
 import com.pedrozc90.prototype.ui.screens.products.ProductListViewModel
 import com.pedrozc90.prototype.ui.screens.products.ProductRemoteViewModel
 import com.pedrozc90.prototype.ui.screens.settings.SettingsViewModel
+import com.pedrozc90.rfid.devices.chainway.ChainwayBluetoothRfidDevice
 
 object AppViewModelProvider {
 
@@ -77,6 +80,21 @@ object AppViewModelProvider {
             ProductDetailsViewModel(
                 savedStateHandle = this.createSavedStateHandle(),
                 repository = container().productRepository
+            )
+        }
+
+        // Devices
+        initializer {
+            DevicesViewModel(
+                preferences = container().preferences,
+                bluetooth = container().bluetooth
+            )
+        }
+
+        // Debug
+        initializer {
+            DebugViewModel(
+                device = ChainwayBluetoothRfidDevice(application())
             )
         }
     }

@@ -9,14 +9,14 @@
 
     <!-- PRODUCTS -->
     <string name="products">Products</string>
+    <string name="products_entry">New Product</string>
+    <string name="products_remote">Products Remote</string>
     <string name="products_details">Products Details</string>
     <string name="item_reference">Item Reference</string>
     <string name="description">Description</string>
     <string name="save">Save</string>
     <string name="size">Size</string>
     <string name="color">Color</string>
-    <string name="products_entry">New Product</string>
-    <string name="products_remote">Products Remote</string>
 
     <!-- LOGIN -->
     <string name="login">Login</string>
@@ -29,4 +29,8 @@
     <string name="inventory_batch">Inventory Batch</string>
     <string name="start">Start</string>
     <string name="stop">Stop</string>
+    <string name="click">Click</string>
+
+    <!-- DEVICES -->
+    <string name="devices">Devices</string>
 </resources>

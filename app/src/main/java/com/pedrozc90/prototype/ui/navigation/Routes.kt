@@ -2,11 +2,15 @@ package com.pedrozc90.prototype.ui.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bluetooth
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Token
+import androidx.compose.material.icons.outlined.Bluetooth
+import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Inventory
 import androidx.compose.material.icons.outlined.Login
@@ -86,6 +90,13 @@ sealed class Routes(
         fun createRoute(productId: Long) = "products/${productId}"
     }
 
+    // Devices
+    object Devices : Routes(
+        route = "devices",
+        title = R.string.devices,
+        icon = Icon(selected = Icons.Default.Bluetooth, unselected = Icons.Outlined.Bluetooth)
+    )
+
     companion object {
 
         val all by lazy {
@@ -98,6 +109,7 @@ sealed class Routes(
                 ProductDetails,
                 Inventory,
                 InventoryBatch,
+                Devices,
                 Settings
             )
         }
@@ -111,6 +123,8 @@ sealed class Routes(
                 ProductRemote,
                 Inventory,
                 InventoryBatch
+                InventoryBatch,
+                Devices
             )
         }
 
