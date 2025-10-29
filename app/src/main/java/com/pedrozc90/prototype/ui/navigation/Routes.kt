@@ -2,10 +2,12 @@ package com.pedrozc90.prototype.ui.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Token
+import androidx.compose.material.icons.outlined.Bluetooth
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Login
 import androidx.compose.material.icons.outlined.Settings
@@ -39,6 +41,12 @@ sealed class Routes(
         route = "settings",
         title = R.string.settings,
         icon = Icon(selected = Icons.Default.Settings, unselected = Icons.Outlined.Settings)
+    )
+
+    object Devices : Routes(
+        route = "devices",
+        title = R.string.devices,
+        icon = Icon(selected = Icons.Default.Bluetooth, unselected = Icons.Outlined.Bluetooth)
     )
 
     object Login : Routes(
@@ -82,6 +90,7 @@ sealed class Routes(
                 ProductEntry,
                 ProductRemote,
                 ProductDetails,
+                Devices,
                 Settings
             )
         }
@@ -92,7 +101,8 @@ sealed class Routes(
                 Home,
                 Login,
                 Products,
-                ProductRemote
+                ProductRemote,
+                Devices
             )
         }
 

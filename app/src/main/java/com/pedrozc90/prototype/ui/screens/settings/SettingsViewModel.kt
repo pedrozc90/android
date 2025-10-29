@@ -21,9 +21,9 @@ class SettingsViewModel(
 
     init {
         viewModelScope.launch {
-            uiState = preferences.getSettings()
+            preferences.getSettings()
                 .filterNotNull()
-                .first()
+                .collect { uiState = it }
         }
     }
 
@@ -33,14 +33,15 @@ class SettingsViewModel(
         }
     }
 
-    suspend fun update(state: SettingsUiState) {
+    fun update(state: SettingsUiState) {
         uiState = state
     }
 
     fun onSave() {
         viewModelScope.launch {
             val state = uiState
-            if (isValid(state)) {
+            val valid = isValid(state)
+            if (valid) {
                 preferences.update(state)
             }
         }

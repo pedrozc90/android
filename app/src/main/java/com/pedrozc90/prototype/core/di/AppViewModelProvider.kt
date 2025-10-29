@@ -29,6 +29,14 @@ object AppViewModelProvider {
             )
         }
 
+        // Devices
+        initializer {
+            DevicesViewModel(
+                preferences = container().preferences,
+                bluetooth = container().bluetooth
+            )
+        }
+
         // login
         initializer {
             LoginViewModel(

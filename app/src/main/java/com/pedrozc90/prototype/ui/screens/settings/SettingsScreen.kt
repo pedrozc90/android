@@ -13,7 +13,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -24,7 +23,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pedrozc90.prototype.R
 import com.pedrozc90.prototype.core.di.AppViewModelProvider
 import com.pedrozc90.prototype.ui.theme.PrototypeTheme
-import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
@@ -34,20 +32,13 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val state = viewModel.uiState
-    val coroutineScope = rememberCoroutineScope()
 
     SettingsContent(
         state = state,
-        onValueChange = {
-            coroutineScope.launch {
-                viewModel.update(it)
-            }
-        },
+        onValueChange = { viewModel.update(it) },
         onSaveClick = {
-            coroutineScope.launch {
-                viewModel.onSave()
-                onNavigateUp()
-            }
+            viewModel.onSave()
+            onNavigateUp()
         },
         modifier = modifier
     )
@@ -103,6 +94,7 @@ private fun SettingsBody(
     ) {
         TextField(
             enabled = true,
+            readOnly = true,
             label = {
                 Text(text = "Device")
             },

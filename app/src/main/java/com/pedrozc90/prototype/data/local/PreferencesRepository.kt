@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.pedrozc90.prototype.core.bluetooth.BluetoothDeviceDto
 import com.pedrozc90.prototype.ui.screens.login.LoginUiState
 import com.pedrozc90.prototype.ui.screens.settings.SettingsUiState
 import kotlinx.coroutines.flow.Flow
@@ -75,7 +76,7 @@ class PreferencesRepository(
             }
             .map {
                 SettingsUiState(
-                    device = it[DEVICE] ?: "",
+                    device = it[DEVICE] ?: "None",
                     value = it[POTENCY] ?: 0
                 )
             }
@@ -83,9 +84,14 @@ class PreferencesRepository(
 
     suspend fun update(state: SettingsUiState) {
         ds.edit { prefs ->
-            prefs[DEVICE] = state.device
+            // prefs[DEVICE] = state.device
             prefs[POTENCY] = state.value
         }
+    }
+
+    // Devices
+    suspend fun update(device: BluetoothDeviceDto) {
+        ds.edit { it[DEVICE] = device.address }
     }
 
 }
