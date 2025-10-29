@@ -7,6 +7,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.pedrozc90.prototype.PrototypeApplication
 import com.pedrozc90.prototype.ui.screens.home.HomeViewModel
+import com.pedrozc90.prototype.ui.screens.inventory.InventoryBasicViewModel
+import com.pedrozc90.prototype.ui.screens.inventory.InventoryBatchViewModel
 import com.pedrozc90.prototype.ui.screens.login.LoginViewModel
 import com.pedrozc90.prototype.ui.screens.products.ProductDetailsViewModel
 import com.pedrozc90.prototype.ui.screens.products.ProductEntryViewModel
@@ -42,6 +44,21 @@ object AppViewModelProvider {
             LoginViewModel(
                 preferences = container().preferences,
                 repository = container().remote
+            )
+        }
+
+        // inventory
+        initializer {
+            InventoryBasicViewModel(
+                tagRepository = container().tagRepository,
+                inventoryRepository = container().inventoryRepository
+            )
+        }
+
+        initializer {
+            InventoryBatchViewModel(
+                tagRepository = container().tagRepository,
+                inventoryRepository = container().inventoryRepository
             )
         }
 

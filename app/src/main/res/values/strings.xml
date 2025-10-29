@@ -29,4 +29,14 @@
     <string name="logout">Logout</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
+
+    <!-- INVENTORY -->
+    <string name="inventory">Inventory</string>
+    <string name="inventory_batch">Inventory Batch</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="click">Click</string>
+
+    <!-- DEBUG -->
+    <string name="debug">Debug</string>
 </resources>

@@ -4,13 +4,15 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.pedrozc90.prototype.data.db.dao.InventoryDao
 import com.pedrozc90.prototype.data.db.dao.ProductDao
 import com.pedrozc90.prototype.data.db.dao.TagDao
+import com.pedrozc90.prototype.data.db.models.Inventory
 import com.pedrozc90.prototype.data.db.models.Product
 import com.pedrozc90.prototype.data.db.models.Tag
 
 @Database(
-    entities = [Tag::class, Product::class],
+    entities = [Tag::class, Product::class, Inventory::class],
     version = 1,
     exportSchema = true
 )
@@ -19,6 +21,8 @@ abstract class PrototypeDatabase : RoomDatabase() {
     abstract fun tagDao(): TagDao
 
     abstract fun productDao(): ProductDao
+
+    abstract fun inventoryDao(): InventoryDao
 
     companion object {
 

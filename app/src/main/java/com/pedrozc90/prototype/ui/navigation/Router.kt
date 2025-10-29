@@ -12,6 +12,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.pedrozc90.prototype.ui.screens.devices.DevicesScreen
 import com.pedrozc90.prototype.ui.screens.home.HomeScreen
+import com.pedrozc90.prototype.ui.screens.inventory.InventoryBasicScreen
+import com.pedrozc90.prototype.ui.screens.inventory.InventoryBatchScreen
 import com.pedrozc90.prototype.ui.screens.login.LoginScreen
 import com.pedrozc90.prototype.ui.screens.products.ProductDetailsScreen
 import com.pedrozc90.prototype.ui.screens.products.ProductEntryScreen
@@ -48,6 +50,15 @@ fun Router(
         // Devices
         composable(route = Routes.Devices.route) {
             DevicesScreen()
+        }
+
+        // Inventory
+        composable(route = Routes.Inventory.route) {
+            InventoryBasicScreen()
+        }
+
+        composable(route = Routes.InventoryBatch.route) {
+            InventoryBatchScreen()
         }
 
         // Login

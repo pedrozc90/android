@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Prototype"
 include(":app")
+include(":rfid")

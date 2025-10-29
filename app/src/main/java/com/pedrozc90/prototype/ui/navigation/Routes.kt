@@ -4,11 +4,13 @@ import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Token
 import androidx.compose.material.icons.outlined.Bluetooth
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Inventory
 import androidx.compose.material.icons.outlined.Login
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Token
@@ -55,6 +57,18 @@ sealed class Routes(
         icon = Icon(selected = Icons.Default.Login, unselected = Icons.Outlined.Login)
     )
 
+    object Inventory : Routes(
+        route = "inventory",
+        title = R.string.inventory,
+        icon = Icon(selected = Icons.Default.Inventory, unselected = Icons.Outlined.Inventory)
+    )
+
+    object InventoryBatch : Routes(
+        route = "inventory/batch",
+        title = R.string.inventory_batch,
+        icon = Icon(selected = Icons.Default.Inventory, unselected = Icons.Outlined.Inventory)
+    )
+
     object Products : Routes(
         route = "products",
         title = R.string.products,
@@ -90,6 +104,9 @@ sealed class Routes(
                 ProductEntry,
                 ProductRemote,
                 ProductDetails,
+                Inventory,
+                InventoryBatch,
+                Debug,
                 Devices,
                 Settings
             )
@@ -102,6 +119,9 @@ sealed class Routes(
                 Login,
                 Products,
                 ProductRemote,
+                Inventory,
+                InventoryBatch,
+                Debug,
                 Devices
             )
         }

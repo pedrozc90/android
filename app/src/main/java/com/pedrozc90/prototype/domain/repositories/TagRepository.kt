@@ -1,8 +1,7 @@
 package com.pedrozc90.prototype.domain.repositories
 
-import com.pedrozc90.prototype.data.db.PrototypeDatabase
-import com.pedrozc90.prototype.data.db.models.Tag
 import com.pedrozc90.prototype.data.db.dao.TagDao
+import com.pedrozc90.prototype.data.db.models.Tag
 
 interface TagBaseRepository {
 
@@ -21,8 +20,6 @@ interface TagBaseRepository {
 }
 
 class TagRepository(private val dao: TagDao) : TagBaseRepository {
-
-    constructor(db: PrototypeDatabase) : this(db.tagDao())
 
     override suspend fun insert(tag: Tag) = dao.insert(tag)
 
