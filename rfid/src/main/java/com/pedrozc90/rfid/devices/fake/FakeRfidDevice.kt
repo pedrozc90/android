@@ -1,17 +1,17 @@
 package com.pedrozc90.rfid.devices.fake
 
 import android.util.Log
+import com.pedrozc90.rfid.core.BaseRfidDevice
+import com.pedrozc90.rfid.core.Options
 import com.pedrozc90.rfid.core.RfidDevice
+import com.pedrozc90.rfid.objects.DeviceEvent
+import com.pedrozc90.rfid.objects.RfidDeviceStatus
 import com.pedrozc90.rfid.objects.TagMetadata
 import com.pedrozc90.rfid.utils.EpcUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
@@ -21,47 +21,37 @@ private const val TAG = "FakeRfidDevice"
 
 class FakeRfidDevice(
     private val delayMs: Long = 100L
-) : RfidDevice {
+) : BaseRfidDevice(), RfidDevice {
 
     private val _dataSource = mutableListOf<String>()
-
-    private val _flow = MutableSharedFlow<TagMetadata>(
-        extraBufferCapacity = 256,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-    override val flow: SharedFlow<TagMetadata> = _flow.asSharedFlow()
 
     private var _job: Job? = null
     private var _index: Int = 0
 
     init {
-        init()
+        generateEpcs()
     }
 
-    override fun init() {
-        Log.d(TAG, "Initializing ...")
-        repeat(10_000) { idx ->
-            val epc = EpcUtils.encode(
-                filter = 3,
-                companyPrefix = "0614141",
-                itemReference = "101010",
-                serialNumber = idx.toLong()
-            )
-            _dataSource.add(epc)
-        }
+    override fun init(opts: Options) {
+        Log.d(TAG, "Device initialized.")
+        updateStatus(RfidDeviceStatus.of(status = "INITIALIZED"))
     }
 
     override fun close() {
-        Log.d(TAG, "Closing ...")
+        try {
+            this.stop()
+        } finally {
+            super.close()
+        }
     }
 
-    override fun start() {
+    override fun start(): Boolean {
         if (_job?.isActive == true) {
             Log.d(TAG, "Device has already been started")
-            return
+            return false
         }
 
-        Log.d(TAG, "Starting ...")
+        updateStatus(RfidDeviceStatus.of(status = "RUNNING"))
 
         _job = CoroutineScope(Dispatchers.Default).launch {
             val length = _dataSource.size
@@ -69,7 +59,7 @@ class FakeRfidDevice(
                 // pick a random batch size
                 val batch = Random.nextInt(from = 0, until = 50)
 
-                for (n in 0 .. batch) {
+                for (n in 0..batch) {
                     // pick a random index
                     val index = Random.nextInt(from = 0, until = length)
 
@@ -80,11 +70,9 @@ class FakeRfidDevice(
                     // Suspending emit() combined with cancellation can create races where
                     // the emitter coroutine is cancelled while suspended and future
                     // starts don't behave as expected. tryEmit avoids that.
-                    val emitted = _flow.tryEmit(tag)
+                    val emitted = tryEmit(DeviceEvent.TagEvent(tag = tag))
                     if (!emitted) {
                         Log.d(TAG, "Failed to emit EPC (buffer full): $rfid")
-                    } else {
-                        Log.d(TAG, "Scanned EPC: $rfid")
                     }
                 }
 
@@ -100,12 +88,29 @@ class FakeRfidDevice(
             }
         }
 
+        return true
     }
 
-    override fun stop() {
-        Log.d(TAG, "Stopping ...")
-        _job?.cancel()
-        _job = null
+    override fun stop(): Boolean {
+        updateStatus(RfidDeviceStatus.of(status = "STOPPED"))
+        if (_job?.isActive == true) {
+            _job?.cancel()
+            _job = null
+        }
+        return true
+    }
+
+    private fun generateEpcs() {
+        Log.d(TAG, "Generating Epcs ...")
+        repeat(10_000) { idx ->
+            val epc = EpcUtils.encode(
+                filter = 3,
+                companyPrefix = "0614141",
+                itemReference = "101010",
+                serialNumber = idx.toLong()
+            )
+            _dataSource.add(epc)
+        }
     }
 
 }

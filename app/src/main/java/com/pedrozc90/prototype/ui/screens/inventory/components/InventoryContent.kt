@@ -18,6 +18,7 @@ fun InventoryContent(
     state: InventoryUiState,
     onStart: () -> Unit,
     onStop: () -> Unit,
+    onReset: () -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -43,6 +44,7 @@ fun InventoryContent(
             state = state,
             onStart = onStart,
             onStop = onStop,
+            onReset = onReset,
             onSave = onSave
         )
     }
@@ -65,6 +67,7 @@ private fun InventoryContentPreview() {
             state = state,
             onStart = {},
             onStop = {},
+            onReset = {},
             onSave = {}
         )
     }

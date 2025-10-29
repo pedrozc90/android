@@ -16,6 +16,14 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+
+        // Allow local AAR/JAR lookup from module-local libs folders.
+        // Add any paths that will contain .aar/.jar files.
+        // I recommend putting vendor artifacts into rfid/libs/
+        flatDir {
+            // directories are relative to the project root
+            dirs("rfid/libs")
+        }
     }
 }
 

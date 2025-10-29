@@ -26,6 +26,7 @@ fun InventoryActions(
     state: InventoryUiState,
     onStart: () -> Unit,
     onStop: () -> Unit,
+    onReset: () -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -41,8 +42,9 @@ fun InventoryActions(
             Box(
                 modifier = Modifier.fillMaxWidth()
             ) {
+                val textId = if (state.isRunning) R.string.running else R.string.start
                 Text(
-                    text = stringResource(R.string.start),
+                    text = stringResource(textId),
                     modifier = Modifier.align(Alignment.Center)
                 )
                 if (state.isRunning) {
@@ -50,8 +52,9 @@ fun InventoryActions(
                         color = MaterialTheme.colorScheme.secondary,
                         trackColor = MaterialTheme.colorScheme.surfaceVariant,
                         modifier = Modifier
-                            .size(20.dp)
-                            .align(Alignment.CenterEnd)
+                            .size(24.dp)
+                            .align(Alignment.CenterEnd),
+                        strokeWidth = 2.dp
                     )
                 }
             }
@@ -66,7 +69,15 @@ fun InventoryActions(
         }
 
         Button(
-            enabled = !state.isRunning && state.counter > 0,
+            enabled = !state.isRunning && state.processed > 0,
+            onClick = onReset,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = stringResource(R.string.reset))
+        }
+
+        Button(
+            enabled = !state.isRunning && state.processed > 0,
             onClick = onSave,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -93,6 +104,7 @@ private fun InventoryActionsPreview() {
             state = state,
             onStart = {},
             onStop = {},
+            onReset = {},
             onSave = {}
         )
     }

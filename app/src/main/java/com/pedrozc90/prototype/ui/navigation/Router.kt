@@ -10,6 +10,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.pedrozc90.prototype.ui.screens.debug.DebugScreen
 import com.pedrozc90.prototype.ui.screens.devices.DevicesScreen
 import com.pedrozc90.prototype.ui.screens.home.HomeScreen
 import com.pedrozc90.prototype.ui.screens.inventory.InventoryBasicScreen
@@ -113,6 +114,11 @@ fun Router(
                     onNavigateUp = onNavigateUp
                 )
             }
+        }
+
+        // Debug
+        composable(route = Routes.Debug.route) {
+            DebugScreen()
         }
 
     }

@@ -1,14 +1,19 @@
 package com.pedrozc90.prototype.ui.screens.inventory
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pedrozc90.prototype.Constants
 import com.pedrozc90.prototype.data.db.models.Inventory
 import com.pedrozc90.prototype.data.db.models.Tag
+import com.pedrozc90.prototype.data.local.PreferencesRepository
 import com.pedrozc90.prototype.domain.repositories.InventoryRepository
 import com.pedrozc90.prototype.domain.repositories.TagRepository
-import com.pedrozc90.rfid.devices.fake.FakeRfidDevice
+import com.pedrozc90.rfid.core.Options
+import com.pedrozc90.rfid.core.RfidDevice
+import com.pedrozc90.rfid.objects.DeviceEvent
+import com.pedrozc90.rfid.objects.RfidDeviceStatus
 import com.pedrozc90.rfid.objects.TagMetadata
 import com.pedrozc90.rfid.utils.EpcUtils
 import kotlinx.coroutines.CompletableDeferred
@@ -32,12 +37,11 @@ private sealed class ActorCmd {
 private const val TAG = "InventoryBatchViewModel"
 
 class InventoryBatchViewModel(
+    private val device: RfidDevice,
+    private val preferences: PreferencesRepository,
     private val tagRepository: TagRepository,
     private val inventoryRepository: InventoryRepository
 ) : ViewModel() {
-
-    private val device = FakeRfidDevice()
-
     private var _job: Job? = null
 
     private val _uiState = MutableStateFlow(InventoryUiState())
@@ -158,31 +162,79 @@ class InventoryBatchViewModel(
     }
 
     // ACTIONS
-    fun start() {
-        if (_job?.isActive == true) return
-
-        _uiState.update { it.copy(isRunning = true) }
-
-        _job = viewModelScope.launch {
-            // collect from reader and forward quickly to the actor (trySend won't suspends)
-            device.flow.collect { item ->
-                enqueue(item)
-            }
+    fun onInit() {
+        viewModelScope.launch {
+            val address = preferences.getDevice()
+            device.init(opts = Options(address = address))
         }
 
-        device.start()
+        _job = viewModelScope.launch {
+            device.events.collect { event ->
+                when (event) {
+                    is DeviceEvent.TagEvent -> handleTagEvent(event.tag)
+                    is DeviceEvent.StatusEvent -> handleStatusEvent(event.status)
+                    is DeviceEvent.BatteryEvent -> handleBatteryEvent(event.level)
+                    is DeviceEvent.ErrorEvent -> handleErrorEvent(event.throwable)
+                }
+            }
+        }
+    }
+
+    private fun handleTagEvent(tag: TagMetadata) {
+        _uiState.update { it.copy(received = it.received + 1) }
+        enqueue(tag)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun handleStatusEvent(status: RfidDeviceStatus) {
+        val device = status.device?.address ?: status.device?.name ?: "No Device"
+        _uiState.update { it.copy(status = status.status, device = device) }
+    }
+
+    private fun handleBatteryEvent(level: Int) {
+        _uiState.update { it.copy(battery = level) }
+    }
+
+    private fun handleErrorEvent(cause: Throwable) {
+        Log.e(TAG, "Device error event", cause)
+    }
+
+    fun onDispose() {
+        try {
+            val closed = _channel.close()
+            if (closed) {
+                Log.d(TAG, "Channel closed successfully")
+            } else {
+                Log.e(TAG, "Channel close failed")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to close channel", e)
+        }
+
+        if (_consumer.isActive == true) {
+            _consumer.cancel()
+        }
+
+        if (_job?.isActive == true) {
+            _job?.cancel()
+            _job = null
+        }
+
+        device.stop()
+    }
+
+    fun start() {
+        if (_uiState.value.isRunning) return
+        val started = device.start()
+        _uiState.update { it.copy(isRunning = started) }
     }
 
     fun stop() {
         // stop device first to stop new inputs
-        device.stop()
-
-        // stop actor
-        _job?.cancel()
-        _job = null
+        val stopped = device.stop()
 
         // update state
-        _uiState.update { it.copy(isRunning = false) }
+        _uiState.update { it.copy(isRunning = !stopped) }
 
         viewModelScope.launch {
             try {
@@ -199,6 +251,10 @@ class InventoryBatchViewModel(
                 _uiState.update { it.copy(isStopping = false) }
             }
         }
+    }
+
+    fun reset() {
+        Log.d(TAG, "Resetting inventory state")
     }
 
     fun save() {
@@ -219,14 +275,7 @@ class InventoryBatchViewModel(
     // ensure we cleanup and stop consumer when ViewModel is cleared
     override fun onCleared() {
         super.onCleared()
-        try {
-            _channel.close()
-        } catch (e: Exception) {
-            Log.w(TAG, "channel close error", e)
-        }
-        _consumer.cancel()
-        _job?.cancel()
-        device.stop()
+        onDispose()
     }
 
 }

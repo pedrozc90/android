@@ -41,4 +41,10 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // chainway C72 and R6
+    api(files("libs/chainway/DeviceAPI_ver20250209_release.aar"))
+
+    // urovo
+    api(files("libs/urovo/USDKLibrary-v2.3.0214.aar"))
 }

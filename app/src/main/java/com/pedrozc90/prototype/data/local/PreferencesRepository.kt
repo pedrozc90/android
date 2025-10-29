@@ -13,6 +13,7 @@ import com.pedrozc90.prototype.ui.screens.login.LoginUiState
 import com.pedrozc90.prototype.ui.screens.settings.SettingsUiState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private const val TAG = "PreferencesRepository"
@@ -92,6 +93,12 @@ class PreferencesRepository(
     // Devices
     suspend fun update(device: BluetoothDeviceDto) {
         ds.edit { it[DEVICE] = device.address }
+    }
+
+    suspend fun getDevice(): String {
+        return ds.data
+            .map { it[DEVICE] ?: "None" }
+            .first()
     }
 
 }

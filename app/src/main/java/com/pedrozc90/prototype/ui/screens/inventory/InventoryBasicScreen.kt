@@ -4,11 +4,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pedrozc90.prototype.R
 import com.pedrozc90.prototype.core.di.AppViewModelProvider
@@ -21,13 +22,20 @@ fun InventoryBasicScreen(
     modifier: Modifier = Modifier,
     viewModel: InventoryBasicViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
-    val state by viewModel.uiState.collectAsState()
+    // lifecycle-aware collection avoids collecting while stopped
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Ensure the reader is stopped when the Composable is removed from composition
+    // initialize once per ViewModel instance
+    LaunchedEffect(viewModel) {
+        viewModel.onInit()
+    }
+
+    // Stop the reader when the Composable leaves composition (optional).
+    // If you want scanning to continue while navigating away, remove this DisposableEffect.
     DisposableEffect(viewModel) {
         onDispose {
-            // stop producing events and allow consumer to finish persisting backlog
-            viewModel.stop()
+            // this calls the ViewModel cleanup method (non-suspending)
+            viewModel.onDispose()
         }
     }
 
@@ -35,6 +43,7 @@ fun InventoryBasicScreen(
         state = state,
         onStart = { viewModel.start() },
         onStop = { viewModel.stop() },
+        onReset = { viewModel.reset() },
         onSave = { viewModel.persist() },
         modifier = modifier
     )
@@ -65,6 +74,7 @@ private fun InventoryScreenPreview() {
             state = state,
             onStart = {},
             onStop = {},
+            onReset = {},
             onSave = {}
         )
     }

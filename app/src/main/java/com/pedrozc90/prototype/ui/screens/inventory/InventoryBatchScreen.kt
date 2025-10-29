@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -23,11 +24,17 @@ fun InventoryBatchScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    // Ensure the reader is stopped when the Composable is removed from composition
+    // initialize once per ViewModel instance
+    LaunchedEffect(viewModel) {
+        viewModel.onInit()
+    }
+
+    // Stop the reader when the Composable leaves composition (optional).
+    // If you want scanning to continue while navigating away, remove this DisposableEffect.
     DisposableEffect(viewModel) {
         onDispose {
-            // stop producing events and allow consumer to finish persisting backlog
-            viewModel.stop()
+            // this calls the ViewModel cleanup method (non-suspending)
+            viewModel.onDispose()
         }
     }
 
@@ -35,6 +42,7 @@ fun InventoryBatchScreen(
         state = state,
         onStart = { viewModel.start() },
         onStop = { viewModel.stop() },
+        onReset = { viewModel.reset() },
         onSave = { viewModel.save() },
         modifier = modifier
     )
@@ -65,6 +73,7 @@ private fun InventoryScreenPreview() {
             state = state,
             onStart = {},
             onStop = {},
+            onReset = {},
             onSave = {}
         )
     }

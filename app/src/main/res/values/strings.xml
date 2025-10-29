@@ -9,7 +9,7 @@
 
     <!-- DEVICES -->
     <string name="devices">Devices</string>
-    <string name="scanning">Scanning...</string>
+    <string name="scanning">Scanning…</string>
     <string name="scan_devices">Scan Devices</string>
     <string name="connecting_to_bluetooth_device">Connecting to Bluetooth device</string>
 
@@ -33,10 +33,19 @@
     <!-- INVENTORY -->
     <string name="inventory">Inventory</string>
     <string name="inventory_batch">Inventory Batch</string>
-    <string name="start">Start</string>
-    <string name="stop">Stop</string>
-    <string name="click">Click</string>
+    <string name="received">Received: %1$d</string>
+    <string name="repeated">Repeated: %1$d</string>
+    <string name="pending">Pending: %1$d</string>
+    <string name="device">Device: %1$s</string>
+    <string name="status">Status: %1$s</string>
 
     <!-- DEBUG -->
     <string name="debug">Debug</string>
+
+    <!-- ACTIONS -->
+    <string name="click">Click</string>
+    <string name="reset">Reset</string>
+    <string name="running">Running</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
 </resources>

@@ -2,16 +2,18 @@ package com.pedrozc90.prototype.ui.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.outlined.Login
 import androidx.compose.material.icons.filled.Bluetooth
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Inventory
-import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Token
 import androidx.compose.material.icons.outlined.Bluetooth
+import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Inventory
-import androidx.compose.material.icons.outlined.Login
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Token
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -54,7 +56,7 @@ sealed class Routes(
     object Login : Routes(
         route = "login",
         title = R.string.login,
-        icon = Icon(selected = Icons.Default.Login, unselected = Icons.Outlined.Login)
+        icon = Icon(selected = Icons.AutoMirrored.Filled.Login, unselected = Icons.AutoMirrored.Outlined.Login)
     )
 
     object Inventory : Routes(
@@ -93,6 +95,12 @@ sealed class Routes(
         const val ARG_ID = "productId"
         fun createRoute(productId: Long) = "products/${productId}"
     }
+
+    object Debug : Routes(
+        route = "debug",
+        title = R.string.debug,
+        icon = Icon(selected = Icons.Default.BugReport, unselected = Icons.Outlined.BugReport)
+    )
 
     companion object {
 

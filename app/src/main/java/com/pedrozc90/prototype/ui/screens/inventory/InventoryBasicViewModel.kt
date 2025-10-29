@@ -1,74 +1,124 @@
 package com.pedrozc90.prototype.ui.screens.inventory
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pedrozc90.prototype.Constants
 import com.pedrozc90.prototype.data.db.models.Inventory
 import com.pedrozc90.prototype.data.db.models.Tag
+import com.pedrozc90.prototype.data.local.PreferencesRepository
 import com.pedrozc90.prototype.domain.repositories.InventoryRepository
 import com.pedrozc90.prototype.domain.repositories.TagRepository
-import com.pedrozc90.rfid.devices.fake.FakeRfidDevice
+import com.pedrozc90.rfid.core.Options
+import com.pedrozc90.rfid.core.RfidDevice
+import com.pedrozc90.rfid.objects.DeviceEvent
+import com.pedrozc90.rfid.objects.RfidDeviceStatus
 import com.pedrozc90.rfid.objects.TagMetadata
 import com.pedrozc90.rfid.utils.EpcUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 private const val TAG = "InventoryBasicViewModel"
 
 class InventoryBasicViewModel(
+    private val device: RfidDevice,
+    private val preferences: PreferencesRepository,
     private val tagRepository: TagRepository,
     private val inventoryRepository: InventoryRepository
 ) : ViewModel() {
-
-    private val device = FakeRfidDevice()
-
     private var _job: Job? = null
 
-    private val _inventoryId = MutableStateFlow<Long?>(null)
-    private val _uniques = mutableListOf<String>()
-    private val _items = MutableStateFlow<List<TagMetadata>>(emptyList())
-    private val _running = MutableStateFlow(false)
+    private val _uiState = MutableStateFlow(InventoryUiState())
+    val uiState = _uiState.asStateFlow()
 
-    val uiState: StateFlow<InventoryUiState> =
-        combine(_items, _running, _inventoryId) { items, isRunning, inventoryId ->
-            InventoryUiState(items = items, isRunning = isRunning, inventoryId = inventoryId)
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(Constants.STATE_TIMEOUT),
-            initialValue = InventoryUiState()
-        )
+    private val _uniques = HashSet<String>()
+    private val _uniquesMutex = Mutex()
 
-    fun start() {
-        if (_job?.isActive == true) return
+    fun onInit() {
+        viewModelScope.launch {
+            val opts = Options(address = preferences.getDevice(), battery = true)
+            device.init(opts)
+        }
 
-        _running.update { true }
-
-        _job = viewModelScope.launch {
-            device.flow.collect { item ->
-                if (_uniques.contains(item.rfid)) {
-                    Log.d("ScannerViewModel", "Tag ${item.rfid} already scanned, skipping...")
-                } else {
-                    _uniques.add(item.rfid)
-                    _items.update { it + item }
+        // start a long-lived collector to process device events sequentially
+        if (_job?.isActive != true) {
+            _job = viewModelScope.launch {
+                device.events.collect { event ->
+                    when (event) {
+                        is DeviceEvent.TagEvent -> handleTagEvent(event.tag)
+                        is DeviceEvent.StatusEvent -> handleStatusEvent(event.status)
+                        is DeviceEvent.BatteryEvent -> handleBatteryEvent(event.level)
+                        is DeviceEvent.ErrorEvent -> handleErrorEvent(event.throwable)
+                    }
                 }
             }
         }
+    }
 
-        device.start()
+    /**
+     * Stop the collector and close the device resources.
+     * Decide whether this should be called by Composable onDispose() or only from onCleared().
+     */
+    fun onDispose() {
+        // Cancel collector first so it stops processing events
+        if (_job?.isActive == true) {
+            _job?.cancel()
+            _job = null
+        }
+
+        // stop device (if you want to ensure it's not scanning) and close resources
+        try {
+            device.stop()
+            device.close()
+        } catch (t: Throwable) {
+            Log.w(TAG, "Error while closing device", t)
+        }
+
+        // update UI state to reflect device is not running
+        _uiState.update { it.copy(isRunning = false) }
+    }
+
+    fun start() {
+        if (_uiState.value.isRunning) return
+        val started = device.start()
+        _uiState.update { it.copy(isRunning = started) }
+    }
+
+    private suspend fun handleTagEvent(tag: TagMetadata) {
+        val isNew = _uniquesMutex.withLock { _uniques.add(tag.rfid) }
+        if (isNew) {
+            _uiState.update { it.copy(received = it.received + 1, items = it.items + tag) }
+        } else {
+            _uiState.update { it.copy(received = it.received + 1, repeated = it.repeated + 1) }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun handleStatusEvent(status: RfidDeviceStatus) {
+        val device = status.device?.address ?: status.device?.name ?: "No Device"
+        _uiState.update { it.copy(status = status.status, device = device) }
+    }
+
+    private fun handleBatteryEvent(level: Int) {
+        _uiState.update { it.copy(battery = level) }
+    }
+
+    private fun handleErrorEvent(cause: Throwable) {
+        Log.e(TAG, "Device error event", cause)
     }
 
     fun stop() {
-        device.stop()
-        _job?.cancel()
-        _job = null
-        _running.update { false }
+        val stopped = device.stop()
+        _uiState.update { it.copy(isRunning = !stopped) }
+    }
+
+    fun reset() {
+        Log.d(TAG, "Resetting inventory state")
     }
 
     fun persist() {
@@ -77,7 +127,7 @@ class InventoryBasicViewModel(
 
             val inventoryId = state.inventoryId ?: inventoryRepository.insert(Inventory())
             if (state.inventoryId == null) {
-                _inventoryId.update { inventoryId }
+                _uiState.update { it.copy(inventoryId = inventoryId) }
             }
 
             Log.d(TAG, "Persisting ${state.items.size} items to inventory $inventoryId")
@@ -96,6 +146,12 @@ class InventoryBasicViewModel(
                 tagRepository.insertMany(tags)
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        // ensure cleanup if ViewModel is being destroyed
+        onDispose()
     }
 
 }
