@@ -1,11 +1,10 @@
 package com.pedrozc90.rfid.devices.chainway
 
 import android.util.Log
-import com.rscja.deviceapi.RFIDWithUHFBLE
 import com.rscja.deviceapi.interfaces.IUHF
 
 /**
- * Utility wrapper to validate/normalize filter inputs and call RFIDWithUHFBLE.setFilter safely.
+ * Utility wrapper to validate/normalize filter inputs and call IUHF.setFilter safely.
  *
  * Notes:
  * - The SDK demo expects `length` in bits (e.g. EPC hex length * 4).
@@ -18,8 +17,8 @@ object FilterHelper {
     /**
      * Validate and set a filter.
      *
-     * @param reader underlying SDK object (RFIDWithUHFBLE)
-     * @param bank memory bank constant (RFIDWithUHFBLE.Bank_EPC / Bank_TID / Bank_USER)
+     * @param reader underlying SDK object (IUHF)
+     * @param bank memory bank constant (IUHF.Bank_EPC / Bank_TID / Bank_USER)
      * @param startBit pointer / start address (demo uses 32 for EPC)
      * @param lengthBits length in bits (demo UIs send bits; typical = epcHex.length * 4)
      * @param dataHex hex string (may contain spaces); must be hex chars
@@ -101,7 +100,7 @@ object FilterHelper {
      * @param startBit default 32 (demo uses 32 for EPC start)
      * @return true if successful
      */
-    fun setFilterByEpc(reader: RFIDWithUHFBLE, epcHex: String, startBit: Int = 32): Boolean {
+    fun setFilterByEpc(reader: IUHF, epcHex: String, startBit: Int = 32): Boolean {
         val cleaned = epcHex.replace("\\s".toRegex(), "")
         if (cleaned.isEmpty()) {
             Log.e(TAG, "EPC empty")
@@ -109,7 +108,7 @@ object FilterHelper {
         }
         // length in bits = number of hex chars * 4
         val lengthBits = cleaned.length * 4
-        return setFilter(reader, RFIDWithUHFBLE.Bank_EPC, startBit, lengthBits, cleaned)
+        return setFilter(reader, IUHF.Bank_EPC, startBit, lengthBits, cleaned)
     }
 
     /**
@@ -119,34 +118,34 @@ object FilterHelper {
      * @param lengthBits length in bits
      */
     fun setFilterByTid(
-        reader: RFIDWithUHFBLE,
+        reader: IUHF,
         startBit: Int,
         lengthBits: Int,
         dataHex: String
     ): Boolean {
-        return setFilter(reader, RFIDWithUHFBLE.Bank_TID, startBit, lengthBits, dataHex)
+        return setFilter(reader, IUHF.Bank_TID, startBit, lengthBits, dataHex)
     }
 
     /**
      * Helper for USER bank.
      */
     fun setFilterByUser(
-        reader: RFIDWithUHFBLE,
+        reader: IUHF,
         startBit: Int,
         lengthBits: Int,
         dataHex: String
     ): Boolean {
-        return setFilter(reader, RFIDWithUHFBLE.Bank_USER, startBit, lengthBits, dataHex)
+        return setFilter(reader, IUHF.Bank_USER, startBit, lengthBits, dataHex)
     }
 
     /**
      * Disable all filters for EPC, TID and USER as demo did.
      */
-    fun disableAllFilters(reader: RFIDWithUHFBLE): Boolean {
+    fun disableAllFilters(reader: IUHF): Boolean {
         return try {
-            val okEpc = reader.setFilter(RFIDWithUHFBLE.Bank_EPC, 0, 0, "00")
-            val okTid = reader.setFilter(RFIDWithUHFBLE.Bank_TID, 0, 0, "00")
-            val okUser = reader.setFilter(RFIDWithUHFBLE.Bank_USER, 0, 0, "00")
+            val okEpc = reader.setFilter(IUHF.Bank_EPC, 0, 0, "00")
+            val okTid = reader.setFilter(IUHF.Bank_TID, 0, 0, "00")
+            val okUser = reader.setFilter(IUHF.Bank_USER, 0, 0, "00")
             okEpc && okTid && okUser
         } catch (t: Throwable) {
             Log.e(TAG, "disableAllFilters failed", t)

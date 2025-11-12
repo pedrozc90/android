@@ -42,5 +42,5 @@ interface RfidDevice {
 data class Options(
     val address: String? = null,            // device mac address, for bluetooth devices (e.g.: 'E5:F6:E0:3C:C5:AC')
     val battery: Boolean = false,           // whether to poll battery status
-    val batteryPollingDelay: Long = 30_000L // milliseconds between battery status requests
+    val batteryPollingDelay: Long = 60_000L // milliseconds between battery status requests
 )

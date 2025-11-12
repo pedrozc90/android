@@ -15,6 +15,7 @@ import com.pedrozc90.rfid.objects.DeviceEvent
 import com.pedrozc90.rfid.objects.RfidDeviceStatus
 import com.pedrozc90.rfid.objects.TagMetadata
 import com.pedrozc90.rfid.utils.EpcUtils
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,7 +48,7 @@ class InventoryBasicViewModel(
 
         // start a long-lived collector to process device events sequentially
         if (_job?.isActive != true) {
-            _job = viewModelScope.launch {
+            _job = viewModelScope.launch(Dispatchers.IO) {
                 device.events.collect { event ->
                     when (event) {
                         is DeviceEvent.TagEvent -> handleTagEvent(event.tag)
