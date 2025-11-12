@@ -6,14 +6,15 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pedrozc90.prototype.data.local.PreferencesRepository
+import com.pedrozc90.rfid.core.RfidDevice
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 const val TAG = "SettingsViewModel"
 
 class SettingsViewModel(
-    private val preferences: PreferencesRepository
+    private val preferences: PreferencesRepository,
+    private val device: RfidDevice
 ) : ViewModel() {
 
     var uiState by mutableStateOf(SettingsUiState())
@@ -23,13 +24,13 @@ class SettingsViewModel(
         viewModelScope.launch {
             preferences.getSettings()
                 .filterNotNull()
-                .collect { uiState = it }
+                .collect { uiState = it.copy(minPower = device.minPower, maxPower = device.maxPower) }
         }
     }
 
     private fun isValid(state: SettingsUiState): Boolean {
         return with(state) {
-            device.isNotBlank() && value >= 0
+            device.isNotBlank() && power >= 0
         }
     }
 
@@ -51,5 +52,8 @@ class SettingsViewModel(
 
 data class SettingsUiState(
     val device: String = "",
-    val value: Int = 0
+    val frequency: String = "",
+    val power: Int = 0,
+    val minPower: Int = 0,
+    val maxPower: Int = 100
 )

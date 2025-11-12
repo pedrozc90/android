@@ -15,6 +15,9 @@ class ChainwayRfidDevice(context: Context) : ChainwayBaseRfidDevice(context), Rf
 
     override val reader: RFIDWithUHFUART = RFIDWithUHFUART.getInstance()
 
+    override val minPower: Int = 0
+    override val maxPower: Int = 100;
+
     override fun init(opts: Options) {
         reader.init(context)
 

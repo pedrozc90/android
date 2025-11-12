@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pedrozc90.prototype.R
 import com.pedrozc90.prototype.core.di.AppViewModelProvider
+import com.pedrozc90.prototype.ui.components.SelectField
 import com.pedrozc90.prototype.ui.theme.PrototypeTheme
 
 @Composable
@@ -103,20 +104,48 @@ private fun SettingsBody(
             modifier = Modifier.fillMaxWidth()
         )
 
+        val options = mapOf(
+            "china_1" to "China Standard 1 (840~845 MHz)",
+            "china_2" to "China Standard 2 (920~925 MHz)",
+            "europe" to "Europe Standard (865~868 MHz)",
+            "united_states" to "United States Standard (902~928 MHz)",
+            "korea" to "Korea (917~923 MHz)",
+            "japan" to "Japan (916.8~920.8 MHz)",
+            "south_africa" to "South Africa (915~919 MHz)",
+            "taiwan" to "Taiwan (920~928 MHz)",
+            "vietnam" to "Vietnam (918~923 MHz)",
+            "peru" to "Peru (915~928 MHz)",
+            "russia" to "Russia (860~867.6 MHz)",
+            "morocco" to "Morocco (914~921 MHz)",
+            "malaysia" to "Malaysia (919~923 MHz)",
+            "brazil" to "Brazil (902~907.5 MHz)",
+            "brazil_2" to "Brazil (915~928 MHz)",
+        )
+
+        // var frequencyValue by remember { mutableStateOf(options.keys.first()) }
+        SelectField(
+            label = "Frequency",
+            value = state.frequency,
+            items = options.keys.toList(),
+            onLabel = { options[it] ?: "none" },
+            onSelect = { onValueChange(state.copy(frequency = it)) }
+        )
+
         Column(
             verticalArrangement = Arrangement.spacedBy(2.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "Value: ${state.value}%",
-                modifier = Modifier.fillMaxWidth()
+                text = "Power: ${state.power}",
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.labelSmall
             )
             Slider(
-                value = state.value.toFloat(),
-                valueRange = 0f..100f,
+                value = state.power.toFloat(),
+                valueRange = state.minPower.toFloat()..state.maxPower.toFloat(),
                 steps = 99, // max value is divided by steps + 1
-                onValueChange = { onValueChange(state.copy(value = it.toInt())) },
+                onValueChange = { onValueChange(state.copy(power = it.toInt())) },
                 // onValueChangeFinished = onValueChangeFinished,
                 modifier = Modifier
             )
@@ -139,7 +168,7 @@ private fun SettingsBody(
 fun SettingsScreenPreview() {
     val state = SettingsUiState(
         device = "00:11:22:33:44:55",
-        value = 50
+        power = 50
     )
     PrototypeTheme {
         SettingsContent(

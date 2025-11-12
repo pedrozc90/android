@@ -30,7 +30,8 @@ class PreferencesRepository(
 
         // Settings
         private val DEVICE = stringPreferencesKey("device")
-        private val POTENCY = intPreferencesKey("potency")
+        private val FREQUENCY = stringPreferencesKey("frequency")
+        private val POWER = intPreferencesKey("power")
     }
 
     // Login
@@ -78,7 +79,8 @@ class PreferencesRepository(
             .map {
                 SettingsUiState(
                     device = it[DEVICE] ?: "None",
-                    value = it[POTENCY] ?: 0
+                    frequency = it[FREQUENCY] ?: "",
+                    power = it[POWER] ?: 0
                 )
             }
     }
@@ -86,7 +88,8 @@ class PreferencesRepository(
     suspend fun update(state: SettingsUiState) {
         ds.edit { prefs ->
             // prefs[DEVICE] = state.device
-            prefs[POTENCY] = state.value
+            prefs[FREQUENCY] = state.frequency
+            prefs[POWER] = state.power
         }
     }
 

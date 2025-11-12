@@ -23,6 +23,9 @@ class FakeRfidDevice(
     private val delayMs: Long = 100L
 ) : BaseRfidDevice(), RfidDevice {
 
+    override val minPower: Int = 0
+    override val maxPower: Int = 100;
+
     private val _dataSource = mutableListOf<String>()
 
     private var _job: Job? = null

@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface RfidDevice {
 
+    val minPower: Int;
+    val maxPower: Int;
+
     /**
      * Flow emitting event from the device
      */
