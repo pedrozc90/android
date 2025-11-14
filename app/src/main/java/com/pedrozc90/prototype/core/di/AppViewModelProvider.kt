@@ -1,11 +1,13 @@
 package com.pedrozc90.prototype.core.di
 
+import android.util.Log
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.pedrozc90.prototype.PrototypeApplication
+import com.pedrozc90.prototype.core.devices.DeviceFactory
 import com.pedrozc90.prototype.ui.screens.debug.DebugViewModel
 import com.pedrozc90.prototype.ui.screens.devices.DevicesViewModel
 import com.pedrozc90.prototype.ui.screens.home.HomeViewModel
@@ -18,7 +20,8 @@ import com.pedrozc90.prototype.ui.screens.products.ProductListViewModel
 import com.pedrozc90.prototype.ui.screens.products.ProductRemoteViewModel
 import com.pedrozc90.prototype.ui.screens.settings.SettingsViewModel
 import com.pedrozc90.rfid.core.RfidDevice
-import com.pedrozc90.rfid.core.RfidDeviceFactory
+
+private const val TAG = "AppViewModelProvider"
 
 object AppViewModelProvider {
 
@@ -31,7 +34,9 @@ object AppViewModelProvider {
         // settings
         initializer {
             SettingsViewModel(
-                preferences = container().preferences
+                preferences = container().preferences,
+                // device = device(),
+                context = application()
             )
         }
 
@@ -112,5 +117,9 @@ fun CreationExtras.application(): PrototypeApplication =
 
 fun CreationExtras.container(): AppContainer = application().container
 
-fun CreationExtras.device(): RfidDevice =
-    RfidDeviceFactory.build(context = application())
+fun CreationExtras.device(): RfidDevice {
+    // read cached value (synchronous). If null, fallback to a default "none" or fallback device
+    val type = container().preferences.getDeviceType()
+    Log.d(TAG, "Creating RfidDevice of type: $type")
+    return DeviceFactory.build(type = type, context = application())
+}

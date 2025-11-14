@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T> SelectField(
+    enabled: Boolean = true,
     label: String,
     value: T?,
     items: List<T>,
@@ -35,22 +36,24 @@ fun <T> SelectField(
         modifier = Modifier.fillMaxWidth()
     ) {
         ExposedDropdownMenuBox(
-            expanded = expanded,
+            expanded = enabled && expanded,
             onExpandedChange = { expanded = !expanded }
         ) {
             TextField(
+                enabled = enabled,
                 value = if (value != null) onLabel(value) else "",
                 onValueChange = { },
                 readOnly = true,
                 label = { Text(text = label) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true)
                     .clickable { expanded = true }
             )
 
             ExposedDropdownMenu(
-                expanded = expanded,
+                expanded = enabled && expanded,
                 onDismissRequest = { expanded = false }
             ) {
                 items.forEach { item ->

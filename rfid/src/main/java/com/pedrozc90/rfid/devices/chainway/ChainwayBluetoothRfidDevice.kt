@@ -21,8 +21,9 @@ class ChainwayBluetoothRfidDevice(context: Context) : ChainwayBaseRfidDevice(con
 
     private var _batteryJob: Job? = null
 
+    override val name = "ChainwayBluetoothRfidDevice"
     override val minPower: Int = 0
-    override val maxPower: Int = 100;
+    override val maxPower: Int = 75
 
     override fun init(opts: Options) {
         val address = opts.address

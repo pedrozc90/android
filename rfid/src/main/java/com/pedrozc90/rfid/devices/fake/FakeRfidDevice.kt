@@ -23,6 +23,7 @@ class FakeRfidDevice(
     private val delayMs: Long = 100L
 ) : BaseRfidDevice(), RfidDevice {
 
+    override val name = "FakeRfidDevice"
     override val minPower: Int = 0
     override val maxPower: Int = 100;
 

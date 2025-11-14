@@ -21,6 +21,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pedrozc90.prototype.R
+import com.pedrozc90.prototype.core.devices.DeviceFactory
+import com.pedrozc90.prototype.core.devices.DeviceFrequency
 import com.pedrozc90.prototype.core.di.AppViewModelProvider
 import com.pedrozc90.prototype.ui.components.SelectField
 import com.pedrozc90.prototype.ui.theme.PrototypeTheme
@@ -104,31 +106,21 @@ private fun SettingsBody(
             modifier = Modifier.fillMaxWidth()
         )
 
-        val options = mapOf(
-            "china_1" to "China Standard 1 (840~845 MHz)",
-            "china_2" to "China Standard 2 (920~925 MHz)",
-            "europe" to "Europe Standard (865~868 MHz)",
-            "united_states" to "United States Standard (902~928 MHz)",
-            "korea" to "Korea (917~923 MHz)",
-            "japan" to "Japan (916.8~920.8 MHz)",
-            "south_africa" to "South Africa (915~919 MHz)",
-            "taiwan" to "Taiwan (920~928 MHz)",
-            "vietnam" to "Vietnam (918~923 MHz)",
-            "peru" to "Peru (915~928 MHz)",
-            "russia" to "Russia (860~867.6 MHz)",
-            "morocco" to "Morocco (914~921 MHz)",
-            "malaysia" to "Malaysia (919~923 MHz)",
-            "brazil" to "Brazil (902~907.5 MHz)",
-            "brazil_2" to "Brazil (915~928 MHz)",
-        )
-
-        // var frequencyValue by remember { mutableStateOf(options.keys.first()) }
         SelectField(
             label = "Frequency",
             value = state.frequency,
-            items = options.keys.toList(),
-            onLabel = { options[it] ?: "none" },
+            items = DeviceFrequency.entries,
+            onLabel = { it.label },
             onSelect = { onValueChange(state.copy(frequency = it)) }
+        )
+
+        SelectField(
+            enabled = !state.isBuiltIn,
+            label = "Device Type",
+            value = state.type,
+            items = DeviceFactory.options.keys.toList(),
+            onLabel = { DeviceFactory.options[it] ?: "Unknown" },
+            onSelect = { onValueChange(state.copy(type = it)) }
         )
 
         Column(
@@ -142,8 +134,9 @@ private fun SettingsBody(
                 style = MaterialTheme.typography.labelSmall
             )
             Slider(
+                enabled = state.powerMax > 0,
                 value = state.power.toFloat(),
-                valueRange = state.minPower.toFloat()..state.maxPower.toFloat(),
+                valueRange = state.powerMin.toFloat()..state.powerMax.toFloat(),
                 steps = 99, // max value is divided by steps + 1
                 onValueChange = { onValueChange(state.copy(power = it.toInt())) },
                 // onValueChangeFinished = onValueChangeFinished,

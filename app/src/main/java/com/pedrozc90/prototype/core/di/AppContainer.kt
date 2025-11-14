@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.pedrozc90.prototype.core.bluetooth.BluetoothRepository
 import com.pedrozc90.prototype.core.bluetooth.DefaultBluetoothRepository
+import com.pedrozc90.prototype.core.devices.DeviceDetector
 import com.pedrozc90.prototype.data.db.PrototypeDatabase
 import com.pedrozc90.prototype.data.local.PreferencesRepository
 import com.pedrozc90.prototype.data.web.ApiRepository
@@ -34,6 +35,9 @@ interface AppContainer {
 
     // bluetooth
     val bluetooth: BluetoothRepository
+
+    // detector
+    val detector: DeviceDetector
 }
 
 class DefaultAppContainer(context: Context, dataStore: DataStore<Preferences>) : AppContainer {
@@ -81,6 +85,11 @@ class DefaultAppContainer(context: Context, dataStore: DataStore<Preferences>) :
     // bluetooth
     override val bluetooth: BluetoothRepository by lazy {
         DefaultBluetoothRepository(context)
+    }
+
+    // detector
+    override val detector: DeviceDetector by lazy {
+        DeviceDetector(preferences = preferences)
     }
 
 }
