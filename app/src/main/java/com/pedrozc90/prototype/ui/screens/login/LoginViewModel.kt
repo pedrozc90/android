@@ -37,14 +37,13 @@ class LoginViewModel(
     }
 
     suspend fun persist(state: LoginUiState) {
-        val isValid = validate(state)
-        if (isValid) {
+        if (state.isValid()) {
             preferences.update(state)
         }
     }
 
     fun update(state: LoginUiState) {
-        uiState = state.copy(isValid = validate(state))
+        uiState = state.copy(touched = true)
     }
 
     suspend fun onLogin() {
@@ -66,5 +65,25 @@ data class LoginUiState(
     val username: String = "",
     val password: String = "",
     val token: String? = null,
-    val isValid: Boolean = false
-)
+    val touched: Boolean = false
+) {
+
+    fun isValid(): Boolean {
+        return with(this) {
+            isUsernameValid() && isPasswordValid()
+        }
+    }
+
+    fun isUsernameValid(): Boolean {
+        return with(this) {
+            username.isNotBlank() && username.length <= 32
+        }
+    }
+
+    fun isPasswordValid(): Boolean {
+        return with(this) {
+            password.isNotBlank() && password.length <= 32
+        }
+    }
+
+}

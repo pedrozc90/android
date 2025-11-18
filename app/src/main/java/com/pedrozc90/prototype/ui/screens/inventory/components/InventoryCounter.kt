@@ -33,9 +33,6 @@ fun InventoryCounter(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxWidth()
     ) {
-        val device = state.device ?: "None"
-        val status = state.status ?: "None"
-
         Text(
             text = "${state.processed} / ${state.received}",
             fontSize = 52.sp
@@ -58,7 +55,7 @@ fun InventoryCounter(
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    text = stringResource(R.string.device, device),
+                    text = stringResource(R.string.device, state.device.macAddress ?: "Built In"),
                     style = MaterialTheme.typography.bodyLarge
                 )
                 if (state.battery != null && state.battery > 0) {
@@ -81,7 +78,7 @@ fun InventoryCounter(
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    text = stringResource(R.string.status, status),
+                    text = stringResource(R.string.status, state.status),
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
@@ -103,7 +100,6 @@ private fun InventoryCounterPreview() {
         received = 150,
         pending = 142,
         repeated = 7,
-        device = "Preview",
         status = "Scanning",
         battery = 85
     )

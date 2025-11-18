@@ -2,6 +2,7 @@ package com.pedrozc90.rfid.devices.fake
 
 import android.util.Log
 import com.pedrozc90.rfid.core.BaseRfidDevice
+import com.pedrozc90.rfid.core.DeviceFrequency
 import com.pedrozc90.rfid.core.Options
 import com.pedrozc90.rfid.core.RfidDevice
 import com.pedrozc90.rfid.objects.DeviceEvent
@@ -27,6 +28,7 @@ class FakeRfidDevice(
     override val minPower: Int = 0
     override val maxPower: Int = 100;
 
+    override var opts: Options? = null
     private val _dataSource = mutableListOf<String>()
 
     private var _job: Job? = null
@@ -37,6 +39,7 @@ class FakeRfidDevice(
     }
 
     override fun init(opts: Options) {
+        this.opts = opts
         Log.d(TAG, "Device initialized.")
         updateStatus(RfidDeviceStatus.of(status = "INITIALIZED"))
     }
@@ -115,6 +118,39 @@ class FakeRfidDevice(
             )
             _dataSource.add(epc)
         }
+    }
+
+    // API
+    override fun getInventoryParams(): Any? {
+        return null
+    }
+
+    override fun setInventoryParams(value: Any): Boolean {
+        return false
+    }
+
+    override fun getFrequency(): DeviceFrequency {
+        return DeviceFrequency.BRAZIL
+    }
+
+    override fun setFrequency(value: DeviceFrequency): Boolean {
+        return false
+    }
+
+    override fun getPower(): Int {
+        return 0
+    }
+
+    override fun setPower(value: Int): Boolean {
+        return false
+    }
+
+    override fun getBeep(): Boolean {
+        return false
+    }
+
+    override fun setBeep(enabled: Boolean): Boolean {
+        return false
     }
 
 }

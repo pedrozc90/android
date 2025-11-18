@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothConnected
 import androidx.compose.material.icons.filled.BluetoothDisabled
+import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.Bluetooth
 import androidx.compose.material3.Card
@@ -58,7 +59,7 @@ fun DevicesScreen(
 }
 
 @Composable
-private fun DevicesContent(
+fun DevicesContent(
     modifier: Modifier = Modifier,
     state: DevicesUiState,
     onClickStart: () -> Unit,
@@ -133,16 +134,27 @@ private fun DevicesList(
     items: List<BluetoothDeviceDto>,
     onClickItem: (BluetoothDeviceDto) -> Unit
 ) {
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.fillMaxSize()
-    ) {
-        itemsIndexed(items = items) { idx, device ->
-            DeviceItem(
-                device = device,
-                onClick = { onClickItem(device) }
-            )
+    if (items.isEmpty()) {
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(imageVector = Icons.Default.Devices, contentDescription = "No Devices")
+            Text(text = "No Devices found")
+        }
+    } else {
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = modifier.fillMaxSize()
+        ) {
+            itemsIndexed(items = items) { idx, device ->
+                DeviceItem(
+                    device = device,
+                    onClick = { onClickItem(device) }
+                )
+            }
         }
     }
 }
@@ -227,6 +239,24 @@ fun DeviceItemPreview() {
             BluetoothDeviceDto(name = "Device 3", address = "77:88:99:AA:BB:CC"),
             BluetoothDeviceDto(name = "Device 4", address = "DD:EE:FF:00:11:22")
         )
+    )
+
+    PrototypeTheme {
+        DevicesContent(
+            state = state,
+            onClickStart = {},
+            onClickStop = {},
+            onClickItem = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun EmptyDevicesListPreview() {
+    val state = DevicesUiState(
+        paired = listOf(),
+        scanned = listOf()
     )
 
     PrototypeTheme {

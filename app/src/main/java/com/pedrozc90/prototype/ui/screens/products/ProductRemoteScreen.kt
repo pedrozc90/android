@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pedrozc90.prototype.R
 import com.pedrozc90.prototype.core.di.AppViewModelProvider
-import com.pedrozc90.prototype.data.db.models.Product
 import com.pedrozc90.prototype.data.web.objects.ProductDto
 import com.pedrozc90.prototype.ui.theme.PrototypeTheme
 import java.util.UUID
@@ -160,7 +159,12 @@ private fun ProductDtoItem(
 @Composable
 fun ProductRemoteScreenPreview() {
     val items = listOf(
-        ProductDto(id = 0, uuid = UUID.randomUUID(), itemReference = "PRD001", description = "Product 1")
+        ProductDto(
+            id = 0,
+            uuid = UUID.randomUUID(),
+            itemReference = "PRD001",
+            description = "Product 1"
+        )
     )
     PrototypeTheme {
         ProductRemoteContent(

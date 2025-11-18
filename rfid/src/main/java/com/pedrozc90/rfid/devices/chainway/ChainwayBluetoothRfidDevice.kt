@@ -2,10 +2,12 @@ package com.pedrozc90.rfid.devices.chainway
 
 import android.content.Context
 import android.util.Log
+import com.pedrozc90.rfid.core.DeviceFrequency
 import com.pedrozc90.rfid.core.Options
 import com.pedrozc90.rfid.core.RfidDevice
 import com.pedrozc90.rfid.objects.DeviceEvent
 import com.rscja.deviceapi.RFIDWithUHFBLE
+import com.rscja.deviceapi.entity.Gen2Entity
 import com.rscja.deviceapi.interfaces.ConnectionStatus
 import com.rscja.deviceapi.interfaces.KeyEventCallback
 import kotlinx.coroutines.Job
@@ -17,16 +19,19 @@ class ChainwayBluetoothRfidDevice(context: Context) : ChainwayBaseRfidDevice(con
 
     override val TAG = "ChainwayBluetoothRfidDevice"
 
+    override var opts: Options? = null
     override val reader: RFIDWithUHFBLE = RFIDWithUHFBLE.getInstance()
 
     private var _batteryJob: Job? = null
 
     override val name = "ChainwayBluetoothRfidDevice"
-    override val minPower: Int = 0
-    override val maxPower: Int = 75
+    override val minPower: Int = 1
+    override val maxPower: Int = 30
 
     override fun init(opts: Options) {
-        val address = opts.address
+        this.opts = opts
+
+        val address = opts.macAddress
             ?: throw IllegalArgumentException("Device MAC Address is required to connect via bluetooth.")
 
         reader.init(context)
@@ -83,8 +88,24 @@ class ChainwayBluetoothRfidDevice(context: Context) : ChainwayBaseRfidDevice(con
 
     override fun start(): Boolean {
         try {
-            setFrequencyMode("brazil")
-            setPower(30)
+            if (opts == null) {
+                throw IllegalStateException("Device not initialized. Call init() before start().")
+            }
+
+            val frequencyUpdated = this.setFrequency(opts!!.frequency)
+            if (frequencyUpdated) {
+                Log.d(TAG, "Device frequency changed to ${opts!!.frequency}")
+            } else {
+                Log.e(TAG, "Failed to set device frequency to ${opts!!.frequency}")
+            }
+
+            val powerUpdated = this.setPower(opts!!.power)
+            if (powerUpdated) {
+                Log.d(TAG, "Device power changed to ${opts!!.power}")
+            } else {
+                Log.e(TAG, "Failed to set device power to ${opts!!.power}")
+            }
+
             setTagFocus(false)
             configUHFInfo()
             disableFilters()
@@ -139,6 +160,21 @@ class ChainwayBluetoothRfidDevice(context: Context) : ChainwayBaseRfidDevice(con
     }
 
     // API
+    override fun getInventoryParams(): Any? {
+        val params = reader.getGen2()
+        throw UnsupportedOperationException("Not yet implemented")
+    }
+
+    override fun setInventoryParams(value: Any): Boolean {
+        // TODO: how do I convert 'value' into Gen2Entity?
+        val params = Gen2Entity()
+        return reader.setGen2(params)
+    }
+
+    override fun setFrequency(value: DeviceFrequency): Boolean {
+        return super.setFrequencyMode(value);
+    }
+
     override fun getPower(): Int {
         return getPower(reader)
     }
@@ -152,14 +188,15 @@ class ChainwayBluetoothRfidDevice(context: Context) : ChainwayBaseRfidDevice(con
     }
 
     // BEEP
-    fun getBeep(): Int {
-        return reader.getBeep()
+    override fun getBeep(): Boolean {
+        val result = reader.getBeep()
+        return result == 1
     }
 
     /**
      * Enable or disable audible beep on tag read or events.
      */
-    fun setBeep(enabled: Boolean): Boolean {
+    override fun setBeep(enabled: Boolean): Boolean {
         return reader.setBeep(enabled)
     }
 

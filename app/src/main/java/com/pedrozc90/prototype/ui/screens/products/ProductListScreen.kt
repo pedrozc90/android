@@ -1,7 +1,6 @@
 package com.pedrozc90.prototype.ui.screens.products
 
 import android.text.format.DateFormat
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -87,7 +86,8 @@ private fun ProductListContent(
 
         FloatingActionButton(
             onClick = { onNavigateToNewItem() },
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .padding(16.dp)
                 .align(Alignment.BottomEnd)
         ) {
             Icon(

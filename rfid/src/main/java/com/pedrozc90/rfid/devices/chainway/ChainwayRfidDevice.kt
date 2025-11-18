@@ -2,24 +2,27 @@ package com.pedrozc90.rfid.devices.chainway
 
 import android.content.Context
 import android.util.Log
+import com.pedrozc90.rfid.core.DeviceFrequency
 import com.pedrozc90.rfid.core.Options
 import com.pedrozc90.rfid.core.RfidDevice
 import com.pedrozc90.rfid.objects.DeviceEvent
 import com.rscja.deviceapi.RFIDWithUHFUART
-
-private const val TAG = "ChainwayRfidDevice"
+import com.rscja.deviceapi.entity.Gen2Entity
 
 class ChainwayRfidDevice(context: Context) : ChainwayBaseRfidDevice(context), RfidDevice {
 
     override val TAG: String = "ChainwayRfidDevice"
 
+    override var opts: Options? = null
     override val reader: RFIDWithUHFUART = RFIDWithUHFUART.getInstance()
 
     override val name = "ChainwayRfidDevice"
-    override val minPower: Int = 0
-    override val maxPower: Int = 100
+    override val minPower: Int = 1
+    override val maxPower: Int = 30
 
     override fun init(opts: Options) {
+        this.opts = opts
+
         reader.init(context)
 
         // set up the inventory callback to handle scanned tags
@@ -50,8 +53,24 @@ class ChainwayRfidDevice(context: Context) : ChainwayBaseRfidDevice(context), Rf
 
     override fun start(): Boolean {
         try {
-            setFrequencyMode("brazil")
-            setPower(30)
+            if (opts == null) {
+                throw IllegalStateException("Device not initialized. Call init() before start().")
+            }
+
+            val frequencyUpdated = this.setFrequency(opts!!.frequency)
+            if (frequencyUpdated) {
+                Log.d(TAG, "Device frequency changed to ${opts!!.frequency}")
+            } else {
+                Log.e(TAG, "Failed to set device frequency to ${opts!!.frequency}")
+            }
+
+            val powerUpdated = this.setPower(opts!!.power)
+            if (powerUpdated) {
+                Log.d(TAG, "Device power changed to ${opts!!.power}")
+            } else {
+                Log.e(TAG, "Failed to set device power to ${opts!!.power}")
+            }
+
             setTagFocus(false)
             configUHFInfo()
             disableFilters()
@@ -80,12 +99,37 @@ class ChainwayRfidDevice(context: Context) : ChainwayBaseRfidDevice(context), Rf
         return stopped
     }
 
+    // API
+    override fun getInventoryParams(): Any? {
+        val params = reader.getGen2()
+        Log.d(TAG, "Inventory params: $params")
+        return null;
+    }
+
+    override fun setInventoryParams(value: Any): Boolean {
+        // TODO: how do I convert 'value' into Gen2Entity?
+        val params = Gen2Entity()
+        return reader.setGen2(params)
+    }
+
+    override fun setFrequency(value: DeviceFrequency): Boolean {
+        return super.setFrequencyMode(value);
+    }
+
     override fun getPower(): Int {
-        return getPower(reader)
+        return super.getPower(reader)
     }
 
     override fun setPower(value: Int): Boolean {
-        return setPower(reader, value)
+        return super.setPower(reader, value)
+    }
+
+    override fun getBeep(): Boolean {
+        throw UnsupportedOperationException("Beep setting is not supported on $name")
+    }
+
+    override fun setBeep(enabled: Boolean): Boolean {
+        throw UnsupportedOperationException("Beep setting is not supported on $name")
     }
 
     override fun getTagFocus(): Int {

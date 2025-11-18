@@ -3,9 +3,7 @@ package com.pedrozc90.prototype.ui.screens.products
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pedrozc90.prototype.Constants
-import com.pedrozc90.prototype.data.db.models.Product
 import com.pedrozc90.prototype.domain.repositories.ProductRepository
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map

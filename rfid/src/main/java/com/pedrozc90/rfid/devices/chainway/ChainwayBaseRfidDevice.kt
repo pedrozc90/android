@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.util.Log
 import com.pedrozc90.rfid.core.BaseRfidDevice
+import com.pedrozc90.rfid.core.DeviceFrequency
 import com.pedrozc90.rfid.core.clamp
 import com.pedrozc90.rfid.devices.chainway.objects.Gen2Dto
 import com.pedrozc90.rfid.objects.DeviceEvent
@@ -114,6 +115,11 @@ abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfid
         return reader.getFrequencyMode()
     }
 
+    fun getFrequency(): DeviceFrequency {
+        val mode = getFrequencyMode()
+        return DeviceFrequency.entries.firstOrNull { it.chainway == mode } ?: DeviceFrequency.BRAZIL
+    }
+
     /**
      * Selects a pre-configured region frequency plan
      */
@@ -144,6 +150,15 @@ abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfid
         if (updated) {
             Log.d(TAG, "Frequency changed to $mode = $value")
         }
+    }
+
+    fun setFrequencyMode(mode: DeviceFrequency): Boolean {
+        val value = mode.chainway ?: 0x00
+        val updated = setFrequencyMode(value)
+        if (updated) {
+            Log.d(TAG, "Frequency changed to ${mode.key} = $value")
+        }
+        return updated
     }
 
     // FREQUENCY HOPPING

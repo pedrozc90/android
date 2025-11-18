@@ -3,55 +3,79 @@ package com.pedrozc90.prototype.ui.screens.settings
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pedrozc90.prototype.core.bluetooth.BluetoothDeviceDto
+import com.pedrozc90.prototype.core.bluetooth.BluetoothRepository
 import com.pedrozc90.prototype.core.devices.DeviceFactory
-import com.pedrozc90.prototype.core.devices.DeviceFrequency
+import com.pedrozc90.prototype.core.devices.DeviceType
 import com.pedrozc90.prototype.data.local.PreferencesRepository
+import com.pedrozc90.prototype.ui.screens.devices.DevicesUiState
+import com.pedrozc90.rfid.core.DeviceFrequency
+import com.pedrozc90.rfid.core.Options
 import com.pedrozc90.rfid.core.RfidDevice
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 const val TAG = "SettingsViewModel"
 
 class SettingsViewModel(
     private val preferences: PreferencesRepository,
+    private val bluetooth: BluetoothRepository,
     private val context: Context
 ) : ViewModel() {
 
     private var device: RfidDevice? = null
 
-    var uiState by mutableStateOf(SettingsUiState())
-        private set
+    private var _uiState = MutableStateFlow(SettingsUiState())
+    val uiState = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             preferences.getSettings()
                 .filterNotNull()
-                .collect { state ->
-                    Log.d(TAG, "Loaded settings: $state")
-                    device = getDevice(type = state.type)
-                    uiState = state.copy(
-                        powerMin = device?.minPower ?: 0,
-                        powerMax = device?.maxPower ?: 0
-                    )
+                .collect { value ->
+                    Log.d(TAG, "Loaded settings: $value")
+                    device = buildRfidDevice(type = value.type)
+                    Log.d(TAG, "Built device: $device")
+                    _uiState.update {
+                        it.copy(
+                            isBuiltIn = value.isBuiltIn,
+                            type = value.type,
+                            macAddress = value.macAddress,
+                            frequency = value.frequency,
+                            power = value.power,
+                            powerMin = device?.minPower ?: 0,
+                            powerMax = device?.maxPower ?: 0
+                        )
+                    }
                 }
+        }
+
+        viewModelScope.launch {
+            bluetooth.pairedDevices.collect { paired ->
+                _uiState.update { it.copy(devices = it.devices.copy(paired = paired)) }
+            }
+
+            bluetooth.scannedDevices.collect { scanned ->
+                _uiState.update { it.copy(devices = it.devices.copy(scanned = scanned)) }
+            }
         }
     }
 
     private fun isValid(state: SettingsUiState): Boolean {
         return with(state) {
-            device.isNotBlank() && power >= 0
+            ((type.bluetooth && !macAddress.isNullOrBlank()) || !type.bluetooth) && power >= 0
         }
     }
 
     fun update(state: SettingsUiState) {
-        val changed = state.type != uiState.type
+        val changed = state.type != _uiState.value.type
         if (changed) {
-            device = getDevice(state.type)
+            device = buildRfidDevice(state.type)
             if (device != null) {
                 Log.d(TAG, "Device type changed, new device: ${device!!.name}")
                 val powerMin = device!!.minPower
@@ -63,45 +87,120 @@ class SettingsViewModel(
                 } else {
                     state.power
                 }
-                uiState = state.copy(power = powerValue, powerMin = powerMin, powerMax = powerMax)
+                _uiState.update {
+                    state.copy(
+                        power = powerValue,
+                        powerMin = powerMin,
+                        powerMax = powerMax
+                    )
+                }
                 return
             }
         }
 
-        uiState = state
+        _uiState.update { state }
     }
 
     fun onSave() {
         viewModelScope.launch {
-            val state = uiState
+            val state = _uiState.value
             val valid = isValid(state)
             if (valid) {
-                preferences.update(state)
+                preferences.update(state.toDeviceSettings())
             }
         }
     }
 
-    fun getDevice(type: String): RfidDevice? {
+    fun buildRfidDevice(type: DeviceType): RfidDevice? {
         return try {
-            DeviceFactory.build(type = type, context = context)
+            DeviceFactory.build(type = type.type, context = context)
         } catch (e: Exception) {
-            Toast.makeText(context, "Error creating device of type $type", Toast.LENGTH_LONG).show()
-            Log.e(TAG, "Error creating device of type $type", e)
+            val message = "'${type.label}' not supported."
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            Log.e(TAG, message, e)
             null
+        }
+    }
+
+    fun testConnection() {
+        val state = _uiState.value
+        if (device != null) {
+            val opts = Options(
+                macAddress = state.macAddress,
+                frequency = state.frequency,
+                power = state.power
+            )
+            device!!.init(opts)
+        }
+    }
+
+    // Bluetooth scanning
+    fun startScan() {
+        _uiState.update { it.copy(devices = it.devices.copy(scanning = true)) }
+        bluetooth.start()
+    }
+
+    fun stopScan() {
+        _uiState.update { it.copy(devices = it.devices.copy(scanning = false)) }
+        bluetooth.stop()
+    }
+
+    fun pairDevice(device: BluetoothDeviceDto) {
+        Log.d(TAG, "Pairing device: $device")
+        viewModelScope.launch {
+            _uiState.update { it.copy(macAddress = device.address) }
+            preferences.update(device)
         }
     }
 
 }
 
 data class SettingsUiState(
-    val device: String = "",        // device MAC address
-
-    val isBuiltIn: Boolean = false,
-    val type: String = "",
-
-    val frequency: DeviceFrequency = DeviceFrequency.BRAZIL,
-
+    val isBuiltIn: Boolean = false,                             // rfid reader is built-in the android device
+    val type: DeviceType = DeviceType.FAKE,                     // device type, e.g: Chainway UHF, Chainway BLE, etc.
+    val macAddress: String? = null,                             // device MAC address, required for bluetooth devices
+    val frequency: DeviceFrequency = DeviceFrequency.BRAZIL,    // rfid reader frequency
     val power: Int = 0,
     val powerMin: Int = 0,
-    val powerMax: Int = 100
-)
+    val powerMax: Int = 1,
+
+    val devices: DevicesUiState = DevicesUiState(),
+
+    val errors: Map<String, String> = emptyMap()
+) {
+    fun toDeviceSettings(): DeviceSettings {
+        return DeviceSettings(
+            isBuiltIn = isBuiltIn,
+            type = type,
+            macAddress = macAddress,
+            frequency = frequency,
+            power = power
+        )
+    }
+
+    fun isValid(): Boolean {
+        return with(this) {
+            ((type.bluetooth && !macAddress.isNullOrBlank()) || (!type.bluetooth)) && power > 0
+        }
+    }
+
+}
+
+data class DeviceSettings(
+    val isBuiltIn: Boolean = false,
+    val type: DeviceType = DeviceType.FAKE,
+    val macAddress: String? = null,
+    val frequency: DeviceFrequency = DeviceFrequency.BRAZIL,
+    val power: Int = 1
+) {
+
+    fun toRfidOptions(): Options {
+        return Options(
+            macAddress = macAddress,
+            frequency = frequency,
+            power = power,
+            battery = true
+        )
+    }
+
+}

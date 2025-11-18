@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pedrozc90.prototype.data.local.PreferencesRepository
-import com.pedrozc90.rfid.core.Options
+import com.pedrozc90.prototype.ui.screens.settings.DeviceSettings
 import com.pedrozc90.rfid.core.RfidDevice
 import com.pedrozc90.rfid.objects.DeviceEvent
 import com.pedrozc90.rfid.objects.TagMetadata
@@ -30,6 +30,11 @@ class DebugViewModel(
 
     init {
         _job = viewModelScope.launch {
+            preferences.getSettings()
+                .collect { value ->
+                    _uiState.update { it.copy(device = value) }
+                }
+
             device.events.collect { event ->
                 when (event) {
                     is DeviceEvent.TagEvent -> {
@@ -40,24 +45,21 @@ class DebugViewModel(
                     is DeviceEvent.StatusEvent -> {
                         Log.d(TAG, "Device status changed: ${event.status}")
                         _uiState.update {
-                            it.copy(
-                                status = event.status.status,
-                                device = event.status.device?.address ?: "No Device"
-                            )
+                            it.copy(status = event.status.status)
                         }
                     }
 
                     is DeviceEvent.BatteryEvent -> Log.d(TAG, "Battery level: ${event.level}")
                     is DeviceEvent.ErrorEvent -> Log.e(TAG, "Device error", event.throwable)
                 }
-
             }
         }
     }
 
     fun onInit() {
         val x = viewModelScope.launch(Dispatchers.IO) {
-            val opts = Options(address = preferences.getDevice())
+            val state = _uiState.value
+            val opts = state.device.toRfidOptions()
             device.init(opts)
         }
     }
@@ -85,7 +87,7 @@ class DebugViewModel(
 }
 
 data class DebugUiState(
-    val items: List<TagMetadata> = emptyList(),
+    val device: DeviceSettings = DeviceSettings(),
     val status: String? = null,
-    val device: String? = null
+    val items: List<TagMetadata> = emptyList()
 )

@@ -30,11 +30,13 @@ interface ProductDao {
     @Query("SELECT * FROM products p ORDER BY p.item_reference ASC")
     fun fetch(): Flow<List<Product>>
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM products p
         WHERE p.item_reference LIKE :q
         ORDER BY p.item_reference ASC
-    """)
+    """
+    )
     fun fetch(q: String): Flow<List<Product>>
 
 }

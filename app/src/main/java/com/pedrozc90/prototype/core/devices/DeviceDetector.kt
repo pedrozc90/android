@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 class DeviceDetector(
     private val preferences: PreferencesRepository
 ) {
-    private val TAG = this::class.java.name;
+    private val TAG = "DeviceDetector";
 
     private val _built_in = listOf(
         Device(name = "chainway_uart", keys = arrayOf("c72", "c72a")),
@@ -47,20 +47,17 @@ class DeviceDetector(
         scope.launch {
             try {
                 val detected = detectBuiltIn(context = context)
-                Log.i("PrototypeApplication", "Detector result: $detected")
+                Log.i(TAG, "Detector result: $detected")
 
-                if (detected.isBuiltInDevice && !detected.detectedApi.isNullOrBlank()) {
+                if (detected.isBuiltInDevice && !detected.detectedType.isNullOrBlank()) {
                     // Persist the detected API name (eg "chainway_uart")
                     preferences.setBuiltInDevice(detected)
-                    Log.i(
-                        "PrototypeApplication",
-                        "Persisted detected device type: ${detected.detectedApi}"
-                    )
+                    Log.i(TAG, "Persisted detected device type: ${detected.detectedType}")
                 } else {
-                    Log.i("PrototypeApplication", "No built-in device detected")
+                    Log.i(TAG, "No built-in device detected")
                 }
             } catch (t: Throwable) {
-                Log.w("PrototypeApplication", "Device detection failed: ${t.message}")
+                Log.w(TAG, "Device detection failed: ${t.message}")
             }
         }
     }
@@ -100,64 +97,61 @@ class DeviceDetector(
         val serial =
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) Build.SERIAL else null // "HC720A180800024"
 
-        Log.i(
-            TAG,
-            "BuiltIn detection model = $model, manufacturer = $manufacturer, product = $product, device = $device, board = $board"
+        val deviceInfo = DeviceInfo(
+            id = id,
+            model = model,
+            manufacturer = manufacturer,
+            product = product,
+            device = device,
+            board = board,
+            hardware = hardware,
+            serial = serial
         )
 
-        val result = Result(
-            device = DeviceInfo(
-                id = id,
-                model = model,
-                manufacturer = manufacturer,
-                product = product,
-                device = device,
-                board = board,
-                hardware = hardware,
-                serial = serial
-            )
-        )
+        Log.i(TAG, "BuiltIn detection $deviceInfo")
+
+        val result = Result(device = deviceInfo)
 
         for (row in _built_in) {
             if (row.keys.contains(model)) {
                 return result.copy(
                     isBuiltInDevice = true,
-                    detectedApi = row.name,
+                    detectedType = row.name,
                     detectedKey = model,
                     reason = "build model '$model' matched"
                 )
             } else if (row.keys.contains(manufacturer)) {
                 return result.copy(
                     isBuiltInDevice = true,
-                    detectedApi = row.name,
+                    detectedType = row.name,
                     detectedKey = manufacturer,
                     reason = "build manufacturer '$manufacturer' matched"
                 )
             } else if (row.keys.contains(product)) {
                 return result.copy(
                     isBuiltInDevice = true,
-                    detectedApi = row.name,
+                    detectedType = row.name,
                     detectedKey = product,
                     reason = "build product '$product' matched"
                 )
             } else if (row.keys.contains(device)) {
                 return result.copy(
                     isBuiltInDevice = true,
-                    detectedApi = row.name,
+                    detectedType = row.name,
                     detectedKey = device,
                     reason = "build device '$device' matched"
                 )
             } else if (row.keys.contains(board)) {
                 return result.copy(
                     isBuiltInDevice = true,
-                    detectedApi = row.name,
+                    detectedType = row.name,
                     detectedKey = board,
                     reason = "build board '$board' matched"
                 )
             } else if (row.keys.contains(hardware)) {
                 return result.copy(
                     isBuiltInDevice = true,
-                    detectedApi = row.name,
+                    detectedType = row.name,
                     detectedKey = hardware,
                     reason = "build hardware '$hardware' matched"
                 )
@@ -169,9 +163,9 @@ class DeviceDetector(
     }
 
     data class Result(
-        val isBuiltInDevice: Boolean = false,
-        val detectedApi: String? = null,
-        val detectedKey: String? = null,
+        val isBuiltInDevice: Boolean = false,   // mark if device is built-in, e.g: C72
+        val detectedType: String? = null,       // detected device type, e.g: "chainway_uart"
+        val detectedKey: String? = null,        // parameter that matched
         val reason: String? = null,
         // device params
         val device: DeviceInfo
@@ -199,4 +193,5 @@ class DeviceDetector(
             return result
         }
     }
+
 }

@@ -77,7 +77,9 @@ private fun ScannerTagItem(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(start = 8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 8.dp)
             ) {
                 Text(
                     text = item.rfid,
@@ -93,10 +95,11 @@ private fun ScannerTagItem(
             }
 
             if (expanded) {
-                Column (
+                Column(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.Start,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .padding(4.dp)
                 ) {
                     if (item.tid != null) {
@@ -113,7 +116,8 @@ private fun ScannerTagItem(
                         )
                     }
 
-                    val timestamp = DateFormat.format("yyyy-MM-dd HH:mm:ss", item.timestamp).toString()
+                    val timestamp =
+                        DateFormat.format("yyyy-MM-dd HH:mm:ss", item.timestamp).toString()
                     Text(
                         text = "Received At: $timestamp",
                         style = MaterialTheme.typography.bodySmall

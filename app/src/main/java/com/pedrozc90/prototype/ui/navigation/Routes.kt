@@ -56,7 +56,10 @@ sealed class Routes(
     object Login : Routes(
         route = "login",
         title = R.string.login,
-        icon = Icon(selected = Icons.AutoMirrored.Filled.Login, unselected = Icons.AutoMirrored.Outlined.Login)
+        icon = Icon(
+            selected = Icons.AutoMirrored.Filled.Login,
+            unselected = Icons.AutoMirrored.Outlined.Login
+        )
     )
 
     object Inventory : Routes(

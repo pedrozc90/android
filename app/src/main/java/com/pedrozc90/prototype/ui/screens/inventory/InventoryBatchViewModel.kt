@@ -1,6 +1,5 @@
 package com.pedrozc90.prototype.ui.screens.inventory
 
-import android.annotation.SuppressLint
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,18 +9,19 @@ import com.pedrozc90.prototype.data.db.models.Tag
 import com.pedrozc90.prototype.data.local.PreferencesRepository
 import com.pedrozc90.prototype.domain.repositories.InventoryRepository
 import com.pedrozc90.prototype.domain.repositories.TagRepository
-import com.pedrozc90.rfid.core.Options
 import com.pedrozc90.rfid.core.RfidDevice
 import com.pedrozc90.rfid.objects.DeviceEvent
 import com.pedrozc90.rfid.objects.RfidDeviceStatus
 import com.pedrozc90.rfid.objects.TagMetadata
 import com.pedrozc90.rfid.utils.EpcUtils
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -164,8 +164,10 @@ class InventoryBatchViewModel(
     // ACTIONS
     fun onInit() {
         viewModelScope.launch {
-            val address = preferences.getDevice()
-            device.init(opts = Options(address = address))
+            val settings = preferences.getSettings().first()
+            val opts = settings.toRfidOptions()
+            _uiState.update { it.copy(device = settings) }
+            device.init(opts = opts)
         }
 
         _job = viewModelScope.launch {
@@ -185,10 +187,8 @@ class InventoryBatchViewModel(
         enqueue(tag)
     }
 
-    @SuppressLint("MissingPermission")
     private fun handleStatusEvent(status: RfidDeviceStatus) {
-        val device = status.device?.address ?: status.device?.name ?: "No Device"
-        _uiState.update { it.copy(status = status.status, device = device) }
+        _uiState.update { it.copy(status = status.status) }
     }
 
     private fun handleBatteryEvent(level: Int) {
@@ -199,19 +199,22 @@ class InventoryBatchViewModel(
         Log.e(TAG, "Device error event", cause)
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     fun onDispose() {
         try {
-            val closed = _channel.close()
-            if (closed) {
-                Log.d(TAG, "Channel closed successfully")
-            } else {
-                Log.e(TAG, "Channel close failed")
+            if (!_channel.isClosedForSend) {
+                val closed = _channel.close()
+                if (closed) {
+                    Log.d(TAG, "Channel closed successfully")
+                } else {
+                    Log.e(TAG, "Channel close failed")
+                }
             }
         } catch (e: Exception) {
             Log.w(TAG, "Failed to close channel", e)
         }
 
-        if (_consumer.isActive == true) {
+        if (_consumer.isActive) {
             _consumer.cancel()
         }
 
@@ -254,7 +257,7 @@ class InventoryBatchViewModel(
     }
 
     fun reset() {
-        Log.d(TAG, "Resetting inventory state")
+        _uiState.update { InventoryUiState() }
     }
 
     fun save() {

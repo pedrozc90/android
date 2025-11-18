@@ -35,7 +35,7 @@ object AppViewModelProvider {
         initializer {
             SettingsViewModel(
                 preferences = container().preferences,
-                // device = device(),
+                bluetooth = container().bluetooth,
                 context = application()
             )
         }

@@ -1,11 +1,12 @@
 package com.pedrozc90.prototype.ui.screens.inventory
 
+import com.pedrozc90.prototype.ui.screens.settings.DeviceSettings
 import com.pedrozc90.rfid.objects.TagMetadata
 import com.pedrozc90.rfid.utils.Epc
 
 data class InventoryUiState(
-    val device: String? = null,
-    val status: String? = null,
+    val device: DeviceSettings = DeviceSettings(),
+    val status: String = "Not Connected",
     val battery: Int? = null,
 
     val inventoryId: Long? = null,
