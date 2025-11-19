@@ -5,7 +5,7 @@ import com.pedrozc90.rfid.objects.TagMetadata
 import com.pedrozc90.rfid.utils.Epc
 
 data class InventoryUiState(
-    val device: DeviceSettings = DeviceSettings(),
+    val settings: DeviceSettings = DeviceSettings(),
     val status: String = "Not Connected",
     val battery: Int? = null,
 

@@ -55,7 +55,7 @@ fun InventoryCounter(
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    text = stringResource(R.string.device, state.device.macAddress ?: "Built In"),
+                    text = stringResource(R.string.device, state.settings.macAddress ?: "Built In"),
                     style = MaterialTheme.typography.bodyLarge
                 )
                 if (state.battery != null && state.battery > 0) {

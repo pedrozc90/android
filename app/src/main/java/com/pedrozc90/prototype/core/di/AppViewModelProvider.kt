@@ -120,6 +120,7 @@ fun CreationExtras.container(): AppContainer = application().container
 fun CreationExtras.device(): RfidDevice {
     // read cached value (synchronous). If null, fallback to a default "none" or fallback device
     val type = container().preferences.getDeviceType()
-    Log.d(TAG, "Creating RfidDevice of type: $type")
-    return DeviceFactory.build(type = type, context = application())
+    val device = DeviceFactory.build(type = type, context = application())
+    Log.d(TAG, "Creating RfidDevice '${ device.hashCode() }' of type '$type'")
+    return device
 }

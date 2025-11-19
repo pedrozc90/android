@@ -43,7 +43,7 @@ class InventoryBasicViewModel(
         viewModelScope.launch {
             val settings = preferences.getSettings().first()
             val opts = settings.toRfidOptions()
-            _uiState.update { it.copy(device = settings) }
+            _uiState.update { it.copy(settings = settings) }
             device.init(opts)
         }
 
