@@ -3,6 +3,7 @@ package com.pedrozc90.prototype.ui.screens.inventory
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pedrozc90.prototype.core.devices.DeviceManager
 import com.pedrozc90.prototype.data.db.models.Inventory
 import com.pedrozc90.prototype.data.db.models.Tag
 import com.pedrozc90.prototype.data.local.PreferencesRepository
@@ -15,7 +16,9 @@ import com.pedrozc90.rfid.objects.TagMetadata
 import com.pedrozc90.rfid.utils.EpcUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
@@ -26,11 +29,13 @@ import kotlinx.coroutines.sync.withLock
 private const val TAG = "InventoryBasicViewModel"
 
 class InventoryBasicViewModel(
-    private val device: RfidDevice,
+    private val manager: DeviceManager,
     private val preferences: PreferencesRepository,
     private val tagRepository: TagRepository,
     private val inventoryRepository: InventoryRepository
 ) : ViewModel() {
+    private var device: RfidDevice? = null
+
     private var _job: Job? = null
 
     private val _uiState = MutableStateFlow(InventoryUiState())
@@ -39,18 +44,36 @@ class InventoryBasicViewModel(
     private val _uniques = HashSet<String>()
     private val _uniquesMutex = Mutex()
 
+    private val _errors = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val errors = _errors.asSharedFlow()
+
     fun onInit() {
         viewModelScope.launch {
-            val settings = preferences.getSettings().first()
-            val opts = settings.toRfidOptions()
-            _uiState.update { it.copy(settings = settings) }
-            device.init(opts)
+            try {
+                val type = preferences.getDeviceType()
+                device = manager.build(type)
+                Log.d(TAG, "Built device '$device' of type '$type'")
+
+                val settings = preferences.getSettings().first()
+                val opts = settings.toRfidOptions()
+                _uiState.update { it.copy(settings = settings) }
+
+                device?.init(opts)
+            } catch (e: Throwable) {
+                Log.e(TAG, "Error during device initialization", e)
+                _errors.tryEmit("Error during device initialization: ${e.message}")
+            }
+        }
+
+        if (device == null) {
+            return
         }
 
         // start a long-lived collector to process device events sequentially
         if (_job?.isActive != true) {
+            Log.d(TAG, "Starting device event collector job")
             _job = viewModelScope.launch(Dispatchers.IO) {
-                device.events.collect { event ->
+                device!!.events.collect { event ->
                     when (event) {
                         is DeviceEvent.TagEvent -> handleTagEvent(event.tag)
                         is DeviceEvent.StatusEvent -> handleStatusEvent(event.status)
@@ -59,6 +82,8 @@ class InventoryBasicViewModel(
                     }
                 }
             }
+        } else {
+            Log.d(TAG, "Event collector job is already running")
         }
     }
 
@@ -75,8 +100,8 @@ class InventoryBasicViewModel(
 
         // stop device (if you want to ensure it's not scanning) and close resources
         try {
-            device.stop()
-            device.close()
+            device?.stop()
+            device?.close()
         } catch (t: Throwable) {
             Log.w(TAG, "Error while closing device", t)
         }
@@ -87,7 +112,7 @@ class InventoryBasicViewModel(
 
     fun start() {
         if (_uiState.value.isRunning) return
-        val started = device.start()
+        val started = device?.start() ?: false
         _uiState.update { it.copy(isRunning = started) }
     }
 
@@ -113,12 +138,13 @@ class InventoryBasicViewModel(
     }
 
     fun stop() {
-        val stopped = device.stop()
+        val stopped = device?.stop() ?: false
         _uiState.update { it.copy(isRunning = !stopped) }
     }
 
     fun reset() {
         _uiState.update { InventoryUiState() }
+        _uniques.clear()
     }
 
     fun persist() {

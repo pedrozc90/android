@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pedrozc90.prototype.core.bluetooth.BluetoothDeviceDto
 import com.pedrozc90.prototype.core.bluetooth.BluetoothRepository
-import com.pedrozc90.prototype.core.devices.DeviceFactory
+import com.pedrozc90.prototype.core.devices.DeviceManager
 import com.pedrozc90.prototype.core.devices.DeviceType
 import com.pedrozc90.prototype.data.local.PreferencesRepository
 import com.pedrozc90.prototype.ui.screens.devices.DevicesUiState
@@ -25,6 +25,7 @@ const val TAG = "SettingsViewModel"
 class SettingsViewModel(
     private val preferences: PreferencesRepository,
     private val bluetooth: BluetoothRepository,
+    private val factory: DeviceManager,
     private val context: Context
 ) : ViewModel() {
 
@@ -113,7 +114,7 @@ class SettingsViewModel(
 
     fun buildRfidDevice(type: DeviceType): RfidDevice? {
         return try {
-            DeviceFactory.build(type = type.type, context = context)
+            factory.build(type = type.type)
         } catch (e: Exception) {
             val message = "'${type.label}' not supported."
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()

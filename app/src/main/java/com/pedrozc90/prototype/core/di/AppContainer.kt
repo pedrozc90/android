@@ -7,6 +7,7 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import com.pedrozc90.prototype.core.bluetooth.BluetoothRepository
 import com.pedrozc90.prototype.core.bluetooth.DefaultBluetoothRepository
 import com.pedrozc90.prototype.core.devices.DeviceDetector
+import com.pedrozc90.prototype.core.devices.DeviceManager
 import com.pedrozc90.prototype.data.db.PrototypeDatabase
 import com.pedrozc90.prototype.data.local.PreferencesRepository
 import com.pedrozc90.prototype.data.web.ApiRepository
@@ -38,6 +39,8 @@ interface AppContainer {
 
     // detector
     val detector: DeviceDetector
+
+    val manager: DeviceManager
 }
 
 class DefaultAppContainer(context: Context, dataStore: DataStore<Preferences>) : AppContainer {
@@ -90,6 +93,11 @@ class DefaultAppContainer(context: Context, dataStore: DataStore<Preferences>) :
     // detector
     override val detector: DeviceDetector by lazy {
         DeviceDetector(preferences = preferences)
+    }
+
+    // devices
+    override val manager: DeviceManager by lazy {
+        DeviceManager(context = context)
     }
 
 }
