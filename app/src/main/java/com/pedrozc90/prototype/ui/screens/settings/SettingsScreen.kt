@@ -33,14 +33,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.pedrozc90.prototype.Constants
 import com.pedrozc90.prototype.R
 import com.pedrozc90.prototype.core.bluetooth.BluetoothDeviceDto
-import com.pedrozc90.prototype.core.devices.DeviceType
 import com.pedrozc90.prototype.core.di.AppViewModelProvider
 import com.pedrozc90.prototype.ui.components.SelectField
 import com.pedrozc90.prototype.ui.screens.devices.DevicesContent
 import com.pedrozc90.prototype.ui.theme.PrototypeTheme
 import com.pedrozc90.rfid.core.DeviceFrequency
+import com.pedrozc90.rfid.helpers.DeviceType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,6 +60,7 @@ fun SettingsScreen(
         onValueChange = { viewModel.update(it) },
         onClickSelectDevice = { display = !display },
         onClickTestConnection = { viewModel.testConnection() },
+        onCheckFrequency = viewModel::checkFrequency,
         onSaveClick = {
             viewModel.onSave()
             onNavigateUp()
@@ -95,7 +97,8 @@ private fun SettingsContent(
     onClickStop: () -> Unit,
     onClickItem: (BluetoothDeviceDto) -> Unit,
 
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCheckFrequency: (DeviceFrequency) -> Boolean
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(space = dimensionResource(R.dimen.padding_medium)),
@@ -110,6 +113,7 @@ private fun SettingsContent(
             onValueChange = onValueChange,
             onClickSelectDevice = onClickSelectDevice,
             onClickTestConnection = onClickTestConnection,
+            onCheckFrequency = onCheckFrequency,
             onSaveClick = onSaveClick
         )
     }
@@ -147,6 +151,7 @@ private fun SettingsBody(
     onValueChange: (SettingsUiState) -> Unit,
     onClickSelectDevice: () -> Unit,
     onClickTestConnection: () -> Unit,
+    onCheckFrequency: (DeviceFrequency) -> Boolean,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -162,7 +167,7 @@ private fun SettingsBody(
             enabled = !state.isBuiltIn,
             label = "Device",
             value = state.type,
-            items = DeviceType.entries,
+            items = Constants.SUPPORTED_DEVICES,
             onLabel = { it.label },
             onSelect = { onValueChange(state.copy(type = it)) }
         )
@@ -198,7 +203,7 @@ private fun SettingsBody(
             enabled = (state.type.bluetooth && !state.macAddress.isNullOrBlank()) || !state.type.bluetooth,
             label = "Frequency",
             value = state.frequency,
-            items = DeviceFrequency.options,
+            items = DeviceFrequency.options.filter { onCheckFrequency(it) },
             onLabel = { it.label },
             onSelect = { onValueChange(state.copy(frequency = it)) }
         )
@@ -273,13 +278,13 @@ fun SettingsScreenPreview() {
             state = state,
             onValueChange = {},
             onClickSelectDevice = {},
+            onClickTestConnection = {},
+            onCheckFrequency = { true },
             onSaveClick = {},
-            display = false,
             onDismiss = {},
             onClickStart = {},
             onClickStop = {},
-            onClickItem = {},
-            onClickTestConnection = {}
+            onClickItem = {}
         )
     }
 }

@@ -65,6 +65,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    testImplementation(kotlin("test"))
 
     // data store
     implementation(libs.androidx.datastore.preferences)
@@ -90,8 +91,9 @@ dependencies {
     implementation(libs.retrofit2.kotlinx.serialization.converter)
     implementation(libs.kotlinx.serialization.json)
     implementation("com.squareup.okhttp3:logging-interceptor:5.2.1")
-    testImplementation(kotlin("test"))
 
-    // custom lib
+    // rfid
     implementation(project(":rfid"))
+    implementation(project(":rfid-chainway"))
+    implementation(project(":rfid-urovo"))
 }

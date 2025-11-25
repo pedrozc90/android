@@ -22,7 +22,6 @@ class DebugViewModel(
     private val device: RfidDevice,
     private val preferences: PreferencesRepository
 ) : ViewModel() {
-
     private var _job: Job? = null
 
     private val _uiState = MutableStateFlow(DebugUiState())
@@ -30,42 +29,55 @@ class DebugViewModel(
 
     init {
         _job = viewModelScope.launch {
-            preferences.getSettings()
-                .collect { value ->
-                    _uiState.update { it.copy(device = value) }
-                }
-
-            device.events.collect { event ->
-                when (event) {
-                    is DeviceEvent.TagEvent -> {
-                        Log.d(TAG, "Tag received: $event.tag")
-                        _uiState.update { it.copy(items = it.items + event.tag) }
+            launch {
+                preferences.getSettings()
+                    .collect { value ->
+                        _uiState.update { it.copy(device = value) }
                     }
+            }
 
-                    is DeviceEvent.StatusEvent -> {
-                        Log.d(TAG, "Device status changed: ${event.status}")
-                        _uiState.update {
-                            it.copy(status = event.status.status)
-                        }
+            launch(Dispatchers.IO) {
+                device.events.collect { event ->
+                    when (event) {
+                        is DeviceEvent.TagEvent -> handleTagEvent(event)
+                        is DeviceEvent.StatusEvent -> handleStatusEvent(event)
+                        is DeviceEvent.BatteryEvent -> handleBatteryEvent(event)
+                        is DeviceEvent.ErrorEvent -> handleErrorEvent(event)
                     }
-
-                    is DeviceEvent.BatteryEvent -> Log.d(TAG, "Battery level: ${event.level}")
-                    is DeviceEvent.ErrorEvent -> Log.e(TAG, "Device error", event.throwable)
                 }
             }
         }
+    }
+
+    private fun handleTagEvent(event: DeviceEvent.TagEvent) {
+        Log.d(TAG, "Tag received: $event.tag")
+        _uiState.update { it.copy(items = it.items + event.tag) }
+    }
+
+    private fun handleStatusEvent(event: DeviceEvent.StatusEvent) {
+        Log.d(TAG, "Device status changed: ${event.status}")
+        _uiState.update {
+            it.copy(status = event.status.status)
+        }
+    }
+
+    private fun handleBatteryEvent(event: DeviceEvent.BatteryEvent) {
+        Log.d(TAG, "Battery level: ${event.level}")
+    }
+
+    private fun handleErrorEvent(event: DeviceEvent.ErrorEvent) {
+        Log.e(TAG, "Device error", event.throwable)
     }
 
     fun onInit() {
         val x = viewModelScope.launch(Dispatchers.IO) {
             val state = _uiState.value
             val opts = state.device.toRfidOptions()
-            device.init(opts)
+            device.init(opts = opts)
         }
     }
 
-    override fun onCleared() {
-        super.onCleared()
+    fun onDispose() {
         try {
             if (_job?.isActive == true) {
                 _job?.cancel()
@@ -82,6 +94,11 @@ class DebugViewModel(
 
     fun onStop() {
         device.stop()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        this.onDispose()
     }
 
 }

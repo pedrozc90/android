@@ -67,7 +67,12 @@ object EpcUtils {
      *
      * Throws IllegalArgumentException on invalid input.
      */
-    fun encode(filter: Int, companyPrefix: String, itemReference: String, serialNumber: Long): String {
+    fun encode(
+        filter: Int,
+        companyPrefix: String,
+        itemReference: String,
+        serialNumber: Long
+    ): String {
         val cp = companyPrefix.trim()
         require(cp.all { it.isDigit() }) { "companyPrefix must be numeric digits" }
         val cpLen = cp.length
@@ -152,7 +157,8 @@ object EpcUtils {
 
         fun take(n: Int): BigInteger {
             cursor -= n
-            val value = epc.shiftRight(cursor).and(BigInteger.ONE.shiftLeft(n).minus(BigInteger.ONE))
+            val value =
+                epc.shiftRight(cursor).and(BigInteger.ONE.shiftLeft(n).minus(BigInteger.ONE))
             return value
         }
 

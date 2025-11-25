@@ -8,12 +8,13 @@ import androidx.lifecycle.viewModelScope
 import com.pedrozc90.prototype.core.bluetooth.BluetoothDeviceDto
 import com.pedrozc90.prototype.core.bluetooth.BluetoothRepository
 import com.pedrozc90.prototype.core.devices.DeviceManager
-import com.pedrozc90.prototype.core.devices.DeviceType
 import com.pedrozc90.prototype.data.local.PreferencesRepository
 import com.pedrozc90.prototype.ui.screens.devices.DevicesUiState
 import com.pedrozc90.rfid.core.DeviceFrequency
 import com.pedrozc90.rfid.core.Options
 import com.pedrozc90.rfid.core.RfidDevice
+import com.pedrozc90.rfid.helpers.DeviceDetector
+import com.pedrozc90.rfid.helpers.DeviceType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -114,7 +115,7 @@ class SettingsViewModel(
 
     fun buildRfidDevice(type: DeviceType): RfidDevice? {
         return try {
-            factory.build(type = type.type)
+            factory.build(type = type)
         } catch (e: Exception) {
             val message = "'${type.label}' not supported."
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
@@ -133,6 +134,10 @@ class SettingsViewModel(
             )
             device!!.init(opts)
         }
+    }
+
+    fun checkFrequency(value: DeviceFrequency): Boolean {
+        return device?.checkFrequency(value) ?: false
     }
 
     // Bluetooth scanning

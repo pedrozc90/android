@@ -13,6 +13,7 @@ import com.pedrozc90.prototype.data.local.PreferencesRepository
 import com.pedrozc90.prototype.data.web.ApiRepository
 import com.pedrozc90.prototype.data.web.ApiService
 import com.pedrozc90.prototype.data.web.RemoteRepository
+import com.pedrozc90.prototype.data.web.providers.RetrofitProvider
 import com.pedrozc90.prototype.domain.repositories.InventoryRepository
 import com.pedrozc90.prototype.domain.repositories.ProductRepository
 import com.pedrozc90.prototype.domain.repositories.TagRepository
@@ -72,10 +73,7 @@ class DefaultAppContainer(context: Context, dataStore: DataStore<Preferences>) :
     // Android do not like 'localhost' or '127.0.0.1'
     private val baseUrl: String = "http://10.0.2.2:4100/"
 
-    private val retrofit: Retrofit = Retrofit.Builder()
-        .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
-        .baseUrl(baseUrl)
-        .build()
+    private val retrofit: Retrofit = RetrofitProvider.create(baseUrl, preferences)
 
     private val service: ApiService by lazy {
         retrofit.create(ApiService::class.java)

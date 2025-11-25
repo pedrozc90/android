@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pedrozc90.prototype.Constants
+import com.pedrozc90.prototype.core.devices.DeviceManager
 import com.pedrozc90.prototype.data.db.models.Inventory
 import com.pedrozc90.prototype.data.db.models.Tag
 import com.pedrozc90.prototype.data.local.PreferencesRepository
@@ -37,11 +38,13 @@ private sealed class ActorCmd {
 private const val TAG = "InventoryBatchViewModel"
 
 class InventoryBatchViewModel(
-    private val device: RfidDevice,
+    private val manager: DeviceManager,
     private val preferences: PreferencesRepository,
     private val tagRepository: TagRepository,
     private val inventoryRepository: InventoryRepository
 ) : ViewModel() {
+    private var device: RfidDevice? = null
+
     private var _job: Job? = null
 
     private val _uiState = MutableStateFlow(InventoryUiState())
@@ -124,6 +127,7 @@ class InventoryBatchViewModel(
         _uiState.update { it.copy(isStopping = false) }
     }
 
+
     // PUBLIC API
     fun enqueue(item: TagMetadata) {
         _uiState.update { it.copy(pending = it.pending + 1) }
@@ -164,21 +168,40 @@ class InventoryBatchViewModel(
     // ACTIONS
     fun onInit() {
         viewModelScope.launch {
-            val settings = preferences.getSettings().first()
-            val opts = settings.toRfidOptions()
-            _uiState.update { it.copy(settings = settings) }
-            device.init(opts = opts)
+            try {
+                val type = preferences.deviceType
+                if (type == null) {
+                    throw UnsupportedOperationException("Unable to identity device type")
+                }
+
+                device = manager.build(type)
+                Log.d(TAG, "Built device '$device' of type '$type'")
+
+                val settings = preferences.getSettings().first()
+                val opts = settings.toRfidOptions()
+                _uiState.update { it.copy(settings = settings) }
+
+                device?.init(opts = opts)
+            } catch (tr: Throwable) {
+                Log.e(TAG, "Error during device initialization", tr)
+            }
         }
 
-        _job = viewModelScope.launch {
-            device.events.collect { event ->
-                when (event) {
-                    is DeviceEvent.TagEvent -> handleTagEvent(event.tag)
-                    is DeviceEvent.StatusEvent -> handleStatusEvent(event.status)
-                    is DeviceEvent.BatteryEvent -> handleBatteryEvent(event.level)
-                    is DeviceEvent.ErrorEvent -> handleErrorEvent(event.throwable)
+        // start a long-lived collector to process device events sequentially
+        if (_job?.isActive != true) {
+            Log.d(TAG, "Starting device event collector job")
+            _job = viewModelScope.launch(Dispatchers.IO) {
+                device!!.events.collect { event ->
+                    when (event) {
+                        is DeviceEvent.TagEvent -> handleTagEvent(event.tag)
+                        is DeviceEvent.StatusEvent -> handleStatusEvent(event.status)
+                        is DeviceEvent.BatteryEvent -> handleBatteryEvent(event.level)
+                        is DeviceEvent.ErrorEvent -> handleErrorEvent(event.throwable)
+                    }
                 }
             }
+        } else {
+            Log.d(TAG, "Event collector job is already running")
         }
     }
 
@@ -224,18 +247,24 @@ class InventoryBatchViewModel(
             _job = null
         }
 
-        device.stop()
+        // stop device (if you want to ensure it's not scanning) and close resources
+        try {
+            device?.stop()
+            device?.close()
+        } catch (t: Throwable) {
+            Log.w(TAG, "Error while closing device", t)
+        }
     }
 
     fun start() {
         if (_uiState.value.isRunning) return
-        val started = device.start()
+        val started = device?.start() ?: false
         _uiState.update { it.copy(isRunning = started) }
     }
 
     fun stop() {
         // stop device first to stop new inputs
-        val stopped = device.stop()
+        val stopped = device?.stop() ?: false
 
         // update state
         _uiState.update { it.copy(isRunning = !stopped) }

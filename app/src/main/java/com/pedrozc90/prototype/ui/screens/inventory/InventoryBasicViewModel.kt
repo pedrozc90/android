@@ -50,7 +50,11 @@ class InventoryBasicViewModel(
     fun onInit() {
         viewModelScope.launch {
             try {
-                val type = preferences.getDeviceType()
+                val type = preferences.deviceType
+                if (type == null) {
+                    throw UnsupportedOperationException("Unable to identity device type")
+                }
+
                 device = manager.build(type)
                 Log.d(TAG, "Built device '$device' of type '$type'")
 
@@ -58,10 +62,10 @@ class InventoryBasicViewModel(
                 val opts = settings.toRfidOptions()
                 _uiState.update { it.copy(settings = settings) }
 
-                device?.init(opts)
-            } catch (e: Throwable) {
-                Log.e(TAG, "Error during device initialization", e)
-                _errors.tryEmit("Error during device initialization: ${e.message}")
+                device?.init(opts = opts)
+            } catch (t: Throwable) {
+                Log.e(TAG, "Error during device initialization", t)
+                _errors.tryEmit("Error during device initialization. Reason: ${t.message}")
             }
         }
 
@@ -174,9 +178,9 @@ class InventoryBasicViewModel(
         }
     }
 
+    // ensure we cleanup and stop consumer when ViewModel is cleared
     override fun onCleared() {
         super.onCleared()
-        // ensure cleanup if ViewModel is being destroyed
         onDispose()
     }
 

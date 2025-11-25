@@ -10,11 +10,11 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.pedrozc90.prototype.core.bluetooth.BluetoothDeviceDto
-import com.pedrozc90.prototype.core.devices.DeviceDetector
-import com.pedrozc90.prototype.core.devices.DeviceType
 import com.pedrozc90.prototype.ui.screens.login.LoginUiState
 import com.pedrozc90.prototype.ui.screens.settings.DeviceSettings
 import com.pedrozc90.rfid.core.DeviceFrequency
+import com.pedrozc90.rfid.helpers.DeviceDetector
+import com.pedrozc90.rfid.helpers.DeviceType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -59,18 +59,27 @@ class PreferencesRepository(
         private val DEVICE_SERIAL = stringPreferencesKey("device_serial")
     }
 
-    private val _scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val _scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // Backing flow from DataStore
-    private val _persistedFlow: Flow<String> = ds.data
+    private val _persistedFlow: Flow<State> = ds.data
         .catch { emit(emptyPreferences()) }
-        .map { prefs -> prefs[DEVICE_TYPE] ?: "none" }
+        .map { prefs ->
+            State(
+                token = prefs[TOKEN],
+                type = DeviceType.of(prefs[DEVICE_TYPE])
+            )
+        }
 
     // In-memory state for synchronous access (default null until loaded)
-    private val _state = MutableStateFlow("")
-    val state: StateFlow<String> = _state.asStateFlow()
+    private val _state = MutableStateFlow<State>(State())
+    val state: StateFlow<State> = _state.asStateFlow()
 
     init {
+        this.init()
+    }
+
+    private fun init() {
         // Keep the in-memory value in sync with DataStore
         _scope.launch {
             _persistedFlow.collect { value ->
@@ -80,6 +89,19 @@ class PreferencesRepository(
     }
 
     // Login
+    val token: String?
+        get() = state.value.token
+
+    suspend fun tokenAsync(): String? {
+        return ds.data
+            .catch {
+                Log.e(TAG, "Error while reading 'token' from data store")
+                emit(emptyPreferences())
+            }
+            .map { it[TOKEN] }
+            .first()
+    }
+
     fun getLoginUiState(): Flow<LoginUiState> {
         return ds.data
             .catch {
@@ -107,6 +129,16 @@ class PreferencesRepository(
                 prefs[TOKEN] = token
             }
         }
+        _state.update { it.copy(token = token) }
+    }
+
+    suspend fun clearToken() {
+        ds.edit { prefs ->
+            prefs.remove(TOKEN)
+            prefs.remove(USERNAME)
+            prefs.remove(PASSWORD)
+        }
+        _state.update { it.copy(token = null) }
     }
 
     // Settings
@@ -138,15 +170,14 @@ class PreferencesRepository(
         ds.edit { prefs ->
             prefs[FREQUENCY] = state.frequency.name
             prefs[POWER] = state.power
-            prefs[DEVICE_TYPE] = state.type.type
+            prefs[DEVICE_TYPE] = state.type.name
         }
-        _state.value = state.type.type
+        _state.update { it.copy(type = state.type) }
     }
 
     // Devices
-    suspend fun update(device: BluetoothDeviceDto) {
-        ds.edit { it[DEVICE_MAC_ADDRESS] = device.address }
-    }
+    val deviceType: DeviceType?
+        get() = state.value.type
 
     suspend fun getDevice(): String {
         return ds.data
@@ -154,13 +185,17 @@ class PreferencesRepository(
             .first()
     }
 
+    suspend fun update(device: BluetoothDeviceDto) {
+        ds.edit { it[DEVICE_MAC_ADDRESS] = device.address }
+    }
+
     suspend fun setBuiltInDevice(detected: DeviceDetector.Result) {
-        val isBuiltIn = detected.isBuiltInDevice
-        val type = detected.detectedType ?: "none"
+        val isBuiltIn = detected.builtIn
+        val type = detected.type
         val device = detected.device
         ds.edit { prefs ->
             prefs[DEVICE_BUILT_IN] = isBuiltIn
-            prefs[DEVICE_TYPE] = type
+            prefs[DEVICE_TYPE] = type?.name ?: ""
             prefs[DEVICE_ID] = device.id ?: ""
             prefs[DEVICE_MODEL] = device.model ?: ""
             prefs[DEVICE_MANUFACTURER] = device.manufacturer ?: ""
@@ -170,11 +205,12 @@ class PreferencesRepository(
             prefs[DEVICE_HARDWARE] = device.hardware ?: ""
             prefs[DEVICE_SERIAL] = device.serial ?: ""
         }
-        _state.update { type }
+        _state.update { it.copy(type = type) }
     }
 
-    fun getDeviceType(): String {
-        return _state.value
-    }
+    data class State(
+        val token: String? = null,
+        val type: DeviceType? = null
+    )
 
 }
