@@ -29,6 +29,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "Prototype"
 include(":app")
-include(":rfid")
+include(":rfid-core")
 include(":rfid-chainway")
 include(":rfid-urovo")

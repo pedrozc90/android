@@ -43,7 +43,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     // rfid-core
-    implementation(project(":rfid"))
+    implementation(project(":rfid-core"))
 
     // SDK
     api(files("libs/USDKLibrary-v2.3.0214.aar"))

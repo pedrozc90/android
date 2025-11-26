@@ -93,7 +93,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:5.2.1")
 
     // rfid
-    implementation(project(":rfid"))
+    implementation(project(":rfid-core"))
     implementation(project(":rfid-chainway"))
     implementation(project(":rfid-urovo"))
 }
