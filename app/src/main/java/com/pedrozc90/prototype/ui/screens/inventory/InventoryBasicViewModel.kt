@@ -146,6 +146,29 @@ class InventoryBasicViewModel(
         _uiState.update { it.copy(isRunning = !stopped) }
     }
 
+    private var _tag: TagMetadata? = null
+
+    fun markAsKillTag(tag: TagMetadata) {
+        _tag = tag
+    }
+
+    fun killTag() {
+        val tag = _tag
+        val device = device
+        if (device != null && tag != null) {
+            val killed = device.kill(tag.rfid)
+            if (killed) {
+                val msg = "Tag ${tag.rfid} killed successfully"
+                Log.d(TAG, msg)
+                _errors.tryEmit(msg)
+            } else {
+                val msg = "Failed to kill tag ${tag.rfid}"
+                Log.e(TAG, msg)
+                _errors.tryEmit(msg)
+            }
+        }
+    }
+
     fun reset() {
         _uiState.update { InventoryUiState() }
         _uniques.clear()

@@ -12,3 +12,6 @@ captures
 
 # Android Database Export
 app/schemas/
+
+docs/chainway/**
+!docs/chainway/*.rar

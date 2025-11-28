@@ -175,4 +175,10 @@ class UrovoUART(private val context: Context) : BaseRfidDevice(), RfidDevice {
 
     override fun setBeep(enabled: Boolean): Boolean = false
 
+    override fun kill(rfid: String): Boolean {
+        val password: String? = "00000000"
+        val result = reader.killTag(rfid, password?.encodeToByteArray())
+        return result == 1
+    }
+
 }

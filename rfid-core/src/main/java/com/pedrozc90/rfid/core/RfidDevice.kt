@@ -92,6 +92,13 @@ interface RfidDevice : AutoCloseable {
      */
     fun setBeep(enabled: Boolean): Boolean
 
+    /**
+     * Destroy tag with given RFID
+     * @param rfid tag RFID to kill
+     * @return true if the operation was successful, false otherwise
+     */
+    fun kill(rfid: String): Boolean
+
 }
 
 data class Options(

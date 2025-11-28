@@ -167,4 +167,8 @@ class FakeRfidDevice(
         return true
     }
 
+    override fun kill(rfid: String): Boolean {
+        throw UnsupportedOperationException("Kill operation is not supported.")
+    }
+
 }

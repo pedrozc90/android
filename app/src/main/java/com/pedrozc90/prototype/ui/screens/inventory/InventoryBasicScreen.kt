@@ -69,6 +69,8 @@ fun InventoryBasicScreen(
         state = state,
         onStart = { viewModel.start() },
         onStop = { viewModel.stop() },
+        onKillItem = viewModel::markAsKillTag,
+        onKillTag = { viewModel.killTag() },
         onReset = { viewModel.reset() },
         onSave = { viewModel.persist() },
         modifier = modifier
@@ -92,6 +94,8 @@ private fun InventoryScreenPreview() {
             state = state,
             onStart = {},
             onStop = {},
+            onKillItem = {},
+            onKillTag = {},
             onReset = {},
             onSave = {}
         )

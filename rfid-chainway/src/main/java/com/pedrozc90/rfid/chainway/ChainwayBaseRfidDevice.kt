@@ -3,9 +3,7 @@ package com.pedrozc90.rfid.chainway
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.util.Log
-import com.pedrozc90.rfid.chainway.core.ChainwayFrequency
 import com.pedrozc90.rfid.chainway.core.of
-import com.pedrozc90.rfid.chainway.core.toChainway
 import com.pedrozc90.rfid.chainway.core.toDeviceParams
 import com.pedrozc90.rfid.chainway.core.toGen2Entity
 import com.pedrozc90.rfid.chainway.helpers.FilterHelper
@@ -24,9 +22,12 @@ import com.rscja.deviceapi.interfaces.ConnectionStatus
 import com.rscja.deviceapi.interfaces.ISingleAntenna
 import com.rscja.deviceapi.interfaces.IUHF
 import com.rscja.deviceapi.interfaces.IUhfReader
+import com.rscja.utility.StringUtility
 import kotlinx.coroutines.Job
 
-abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfidDevice(), RfidDevice {
+
+abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfidDevice(),
+    RfidDevice {
 
     protected abstract val TAG: String
 
@@ -225,6 +226,170 @@ abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfid
 
     fun disableFilters(): Boolean {
         return FilterHelper.disableAllFilters(reader)
+    }
+
+    /**
+     * Kill tag using only a password.
+     *
+     * @param p0 password string (8 hex characters), default "00000000".
+     *           This is the kill/access password required by the tag. Expected format:
+     *           - Exactly 8 hexadecimal characters (0-9, A-F/a-f).
+     *           - Some UI code treats spaces/other formats differently; pass the raw hex string without "0x".
+     *
+     * Returns Boolean indicating success (true) or failure (false).
+     */
+    private fun killTag(p0: String) = reader.killTag(p0)
+
+
+    /**
+     * Kill a tag using a password plus a filter to target a specific tag.
+     *
+     * @param p0 password string (8 hex characters), default "00000000".
+     *           The kill/access password to authorize the operation.
+     *
+     * @param p1 memory bank constant. One of:
+     *           - IUHF.Bank_EPC  (EPC memory bank)
+     *           - IUHF.Bank_TID  (TID memory bank)
+     *           - IUHF.Bank_USER (USER memory bank)
+     *           This selects which memory bank the filter will be applied to.
+     *
+     * @param p2 ptr (start offset). Non-negative integer indicating where the filter starts in the selected memory bank.
+     *           The demo SDK treats the pointer as a bit offset into the bank. Confirm with your SDK docs if your
+     *           environment expects a word/byte offset instead.
+     *
+     * @param p3 cnt (length in bits). Non-negative integer specifying how many bits to compare starting at `ptr`.
+     *           If cnt > 0, the `data` parameter must contain at least ceil(cnt / 8) bytes of hex data.
+     *
+     * @param p4 data filter as a hex string. Spaces are allowed and ignored when measuring length.
+     *           - Example valid formats: "3000A1" or "30 00 A1"
+     *           - The number of bytes provided (hex digits / 2) must be >= ceil(cnt / 8) when cnt > 0.
+     *
+     * Returns Boolean indicating whether the kill operation succeeded (true) or failed (false).
+     */
+    private fun killTag(p0: String, p1: Int, p2: Int, p3: Int, p4: String) =
+        reader.killTag(p0, p1, p2, p3, p4)
+
+    /**
+     * Destroy the label.
+     */
+    fun killTag(cmd: Command.KillTag): Boolean {
+        // Map booleans to a bank, preserving original priority (epc > tid > user).
+        val bank = when {
+            cmd.epc -> IUHF.Bank_EPC
+            cmd.tid -> IUHF.Bank_TID
+            cmd.user -> IUHF.Bank_USER
+            else -> null
+        }
+
+        if (cmd.pwd.length != 8) {
+            throw IllegalArgumentException("'pwd' must have 8 characters")
+        } else if (!this.isHexadecimal(cmd.pwd)) {
+            throw IllegalArgumentException("'pwd' must be a hexadecimal string")
+        }
+
+        // If no bank/filter selected, call simple killTag(pwd)
+        if (bank != null) {
+            // Validate ptr and cnt
+            require(cmd.ptr >= 0) { "'ptr' must be greater or equal to 0" }
+            require(cmd.cnt > 0) { "'cnt' must be greater or equal to 0" }
+
+            // Number of bytes required by cnt bits (round up)
+            val flag = (cmd.cnt + 7) / 8
+            val dataLen = cmd.data.replace(" ", "").length / 2
+
+            // dataLen must be at least flag
+            require(dataLen >= flag) { "'data' length (in bytes) must be at least the number of bytes required by 'cnt' ($flag)" }
+
+            return reader.killTag(cmd.pwd, bank, cmd.ptr, cmd.cnt, cmd.data)
+        }
+
+        return reader.killTag(cmd.pwd)
+    }
+
+    override fun kill(rfid: String): Boolean {
+        val cmd = Command.KillTag(
+            pwd = "00000000",
+            epc = true,
+            ptr = 16,
+            cnt = rfid.length * 4,
+            data = rfid            // epc hexdecimal string
+        )
+        Log.d(TAG, "Killing tag with cmd: $cmd")
+        return killTag(cmd = cmd)
+    }
+
+    /**
+     * Write data into tag.
+     *
+     * @param accessPwd  - access password (4 bytes)
+     * @param filterBank - filtered banks (IUHF.Bank_EPC, IUHF.Bank_TID or IUHF.Bank_USER)
+     * @param filterPtr  - filter starting address
+     * @param filterCnt  - filter data length, when filtered data length is 0, it means not filtering.
+     * @param filterData - filter data
+     * @param bank       - write banks (IUHF.Bank_RESERVED, IUHF.Bank_EPC, IUHF.Bank_TID or IUHF.Bank_USER)
+     * @param ptr        - write starting address
+     * @param cnt        - write data length, can not be 0
+     * @param writeData  - write data, must be hexadecimal value
+     * @return true if operation succeeded, false otherwise.
+     */
+    fun writeTag(
+        accessPwd: String? = "00000000", // 4 bytes = 8 characters
+        filterBank: Int = -1,
+        filterPtr: Int = 0,
+        filterLen: Int = 0,
+        filterData: String? = null,
+        bank: Int = 0,
+        ptr: Int = 0,
+        len: Int = 0,
+        writeData: String
+    ): Boolean {
+        require(!accessPwd.isNullOrEmpty()) { "Access password is required." }
+        require(accessPwd.length != 8) { "Access password must have 4 bytes or 8 characters." }
+        require(len <= 0) { "Length must be greater than zero." }
+        require(!writeData.isBlank()) { "Write data is required." }
+
+        if (filterLen > 0) {
+            require(!filterData.isNullOrEmpty()) { "Filter data is required when filter length is greater than zero." }
+            require(filterData.length * 4 >= filterLen) { "Filter data must be greater than or equal to filter bit count." }
+            return reader.writeData(
+                accessPwd,
+                filterBank,
+                filterPtr,
+                filterLen,
+                filterData,
+                bank,
+                ptr,
+                len,
+                writeData
+            )
+        }
+
+        return reader.writeData(
+            accessPwd,
+            bank,
+            ptr,
+            len,
+            writeData
+        )
+    }
+
+    // HELPERS
+    fun isHexadecimal(value: String?): Boolean {
+        if (value == null || value.length == 0 || value.length % 2 != 0) return false
+        return StringUtility.isHexNumberRex(value)
+    }
+
+    // OBJECTS
+    sealed class Command {
+        data class KillTag(
+            val pwd: String = "00000000",
+            val epc: Boolean = false,
+            val tid: Boolean = false,
+            val user: Boolean = false,
+            val ptr: Int = 0,
+            val cnt: Int = 0,
+            val data: String = ""
+        )
     }
 
 }
