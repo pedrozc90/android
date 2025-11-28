@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +37,7 @@ import com.pedrozc90.rfid.objects.TagMetadata
 @Composable
 fun InventoryTagList(
     state: InventoryUiState,
+    onKillItem: (TagMetadata) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val gridState = rememberLazyGridState()
@@ -54,7 +56,11 @@ fun InventoryTagList(
         modifier = modifier.fillMaxSize()
     ) {
         itemsIndexed(items = state.items, key = { idx, row -> row.rfid }) { idx, item ->
-            ScannerTagItem(index = idx, item = item)
+            ScannerTagItem(
+                index = idx,
+                item = item,
+                onKillItem = onKillItem
+            )
         }
     }
 }
@@ -63,6 +69,7 @@ fun InventoryTagList(
 private fun ScannerTagItem(
     index: Int = 0,
     item: TagMetadata,
+    onKillItem: (TagMetadata) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -98,30 +105,51 @@ private fun ScannerTagItem(
                 Column(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(4.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (item.tid != null) {
-                        Text(
-                            text = "TID: ${item.tid}",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier
+                                // .fillMaxWidth()
+                                .weight(1f)
+                                .padding(4.dp)
+                        ) {
+                            if (item.tid != null) {
+                                Text(
+                                    text = "TID: ${item.tid}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
 
-                    if (item.rssi != null) {
-                        Text(
-                            text = "RSSI: ${item.rssi}",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
+                            if (item.rssi != null) {
+                                Text(
+                                    text = "RSSI: ${item.rssi}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
 
-                    val timestamp =
-                        DateFormat.format("yyyy-MM-dd HH:mm:ss", item.timestamp).toString()
-                    Text(
-                        text = "Received At: $timestamp",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                            val timestamp =
+                                DateFormat.format("yyyy-MM-dd HH:mm:ss", item.timestamp).toString()
+                            Text(
+                                text = "Received At: $timestamp",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+
+                        Button(
+                            onClick = { onKillItem(item) },
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp)
+                        ) {
+                            Text(text = "Kill Tag")
+                        }
+                    }
                 }
             }
         }
@@ -158,6 +186,22 @@ private fun InventoryTagsPreview() {
         )
     )
     PrototypeTheme {
-        InventoryTagList(state = state)
+        InventoryTagList(
+            state = state,
+            onKillItem = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ScannerTagItemPreview() {
+    val item = TagMetadata(rfid = "E2000016591702080740B3D4", tid = "0", rssi = "-65")
+    PrototypeTheme {
+        ScannerTagItem(
+            index = 0,
+            item = item,
+            onKillItem = {}
+        )
     }
 }

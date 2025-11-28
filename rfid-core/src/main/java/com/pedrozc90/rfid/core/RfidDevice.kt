@@ -92,6 +92,14 @@ interface RfidDevice : AutoCloseable {
      */
     fun setBeep(enabled: Boolean): Boolean
 
+    /**
+     * Destroy tag with given RFID
+     * @param rfid - tag epc hexadecimal string
+     * @param password - access password, if required by the tag
+     * @return true if the operation was successful, false otherwise
+     */
+    fun kill(rfid: String, password: String? = null): Boolean
+
 }
 
 data class Options(

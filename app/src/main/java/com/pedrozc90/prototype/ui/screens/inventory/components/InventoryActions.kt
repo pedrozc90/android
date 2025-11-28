@@ -26,6 +26,7 @@ fun InventoryActions(
     state: InventoryUiState,
     onStart: () -> Unit,
     onStop: () -> Unit,
+    onKillTag: () -> Unit,
     onReset: () -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier
@@ -70,6 +71,14 @@ fun InventoryActions(
 
         Button(
             enabled = !state.isRunning && state.processed > 0,
+            onClick = onKillTag,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = "Kill Tag")
+        }
+
+        Button(
+            enabled = !state.isRunning && state.processed > 0,
             onClick = onReset,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -104,6 +113,7 @@ private fun InventoryActionsPreview() {
             state = state,
             onStart = {},
             onStop = {},
+            onKillTag = {},
             onReset = {},
             onSave = {}
         )
