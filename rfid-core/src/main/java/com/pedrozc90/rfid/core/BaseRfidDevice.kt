@@ -2,6 +2,7 @@ package com.pedrozc90.rfid.core
 
 import com.pedrozc90.rfid.objects.DeviceEvent
 import com.pedrozc90.rfid.objects.RfidDeviceStatus
+import com.pedrozc90.rfid.objects.TagMetadata
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -39,6 +40,10 @@ abstract class BaseRfidDevice {
 
     protected fun tryEmit(event: DeviceEvent): Boolean {
         return _events.tryEmit(event)
+    }
+
+    protected fun publishTag(tag: TagMetadata): Boolean {
+        return tryEmit(DeviceEvent.TagEvent(tag))
     }
 
     protected fun updateStatus(status: RfidDeviceStatus) {

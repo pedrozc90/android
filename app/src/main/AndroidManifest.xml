@@ -31,6 +31,8 @@
                      tools:targetApi="29"
                      tools:ignore="BackgroundLocationPolicy" />
 
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <uses-feature android:name="android.hardware.bluetooth" />
     <uses-feature android:name="android.hardware.bluetooth_le" />
 

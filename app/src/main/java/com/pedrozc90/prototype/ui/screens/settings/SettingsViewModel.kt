@@ -127,11 +127,19 @@ class SettingsViewModel(
     fun testConnection() {
         val state = _uiState.value
         if (device != null) {
+            val macAddress = state.macAddress
+
+            val bDevice = if (state.type == DeviceType.CHAFON_BLE && macAddress != null)
+                bluetooth.get(macAddress)
+                else null
+
             val opts = Options(
                 macAddress = state.macAddress,
                 frequency = state.frequency,
-                power = state.power
+                power = state.power,
+                bDevice = bDevice
             )
+
             device!!.init(opts)
         }
     }
