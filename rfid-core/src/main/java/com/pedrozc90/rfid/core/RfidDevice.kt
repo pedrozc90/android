@@ -9,9 +9,10 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface RfidDevice : AutoCloseable {
 
+    val TAG: String
+
     var opts: Options?
 
-    val name: String
     val minPower: Int
     val maxPower: Int
 

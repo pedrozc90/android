@@ -25,11 +25,13 @@ class FakeRfidDevice(
     private val delayMs: Long = 100L
 ) : BaseRfidDevice(), RfidDevice {
 
-    override val name = "FakeRfidDevice"
+    override val TAG = "FakeRfidDevice"
+
+    override var opts: Options? = null
+
     override val minPower: Int = 0
     override val maxPower: Int = 100
 
-    override var opts: Options? = null
     private val _dataSource = mutableListOf<String>()
 
     private var _job: Job? = null
@@ -46,7 +48,7 @@ class FakeRfidDevice(
 
     override fun init(opts: Options) {
         this.opts = opts
-        Log.d(TAG, "Device initialized.")
+        Log.d(com.pedrozc90.rfid.devices.TAG, "Device initialized.")
         updateStatus(RfidDeviceStatus.Companion.of(status = "INITIALIZED"))
     }
 
@@ -60,7 +62,7 @@ class FakeRfidDevice(
 
     override fun start(): Boolean {
         if (_job?.isActive == true) {
-            Log.d(TAG, "Device has already been started")
+            Log.d(com.pedrozc90.rfid.devices.TAG, "Device has already been started")
             return false
         }
 
@@ -85,7 +87,10 @@ class FakeRfidDevice(
                     // starts don't behave as expected. tryEmit avoids that.
                     val emitted = tryEmit(DeviceEvent.TagEvent(tag = tag))
                     if (!emitted) {
-                        Log.d(TAG, "Failed to emit EPC (buffer full): $rfid")
+                        Log.d(
+                            com.pedrozc90.rfid.devices.TAG,
+                            "Failed to emit EPC (buffer full): $rfid"
+                        )
                     }
                 }
 
@@ -114,7 +119,7 @@ class FakeRfidDevice(
     }
 
     private fun generateEpcs() {
-        Log.d(TAG, "Generating Epcs ...")
+        Log.d(com.pedrozc90.rfid.devices.TAG, "Generating Epcs ...")
         repeat(10_000) { idx ->
             val epc = EpcUtils.encode(
                 filter = 3,

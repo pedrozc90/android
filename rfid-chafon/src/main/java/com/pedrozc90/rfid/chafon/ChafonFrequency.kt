@@ -114,7 +114,7 @@ sealed class ChafonFrequency(
 
 }
 
-fun DeviceFrequency.toChafon(): ChafonFrequency {
+fun DeviceFrequency.toChafon(): ChafonFrequency? {
     return when (this) {
         DeviceFrequency.CHINA_1 -> ChafonFrequency.ChineseLower
         DeviceFrequency.CHINA_2 -> ChafonFrequency.ChineseUpper
@@ -132,5 +132,6 @@ fun DeviceFrequency.toChafon(): ChafonFrequency {
         DeviceFrequency.BRAZIL -> ChafonFrequency.Brazil
         DeviceFrequency.BRAZIL_LOWER -> ChafonFrequency.Brazil
         DeviceFrequency.BRAZIL_UPPER -> ChafonFrequency.Brazil
+        else -> null
     }
 }

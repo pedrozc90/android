@@ -18,9 +18,10 @@ import com.ubx.usdk.rfid.RfidManager
 
 class UrovoUART(private val context: Context) : BaseRfidDevice(), RfidDevice {
 
+    override val TAG: String = "UrovoUART"
+
     override var opts: Options? = null
 
-    override val name: String = "UrovoUART"
     override val minPower: Int = 1
     override val maxPower: Int = 33
 
@@ -33,14 +34,14 @@ class UrovoUART(private val context: Context) : BaseRfidDevice(), RfidDevice {
 
     override fun init(opts: Options) {
         if (initializing) {
-            Log.d(name, "init() called while already initializing; ignoring.")
+            Log.d(TAG, "init() called while already initializing; ignoring.")
             return
         }
 
         this.opts = opts
 
         manager.init(context) { status: USDKManager.STATUS ->
-            Log.d(name, "InitListener status = $status")
+            Log.d(TAG, "InitListener status = $status")
             if (!initializing) {
                 initializing = true
                 when (status) {
@@ -52,7 +53,7 @@ class UrovoUART(private val context: Context) : BaseRfidDevice(), RfidDevice {
                         val readerType = reader.readerType
                         val firmware = reader.firmwareVersion
                         Log.d(
-                            name,
+                            TAG,
                             "Reader: deviceId = $deviceId, readerType = $readerType, firmware = $firmware"
                         )
                     }
@@ -62,7 +63,7 @@ class UrovoUART(private val context: Context) : BaseRfidDevice(), RfidDevice {
                     USDKManager.STATUS.RELEASE,
                     USDKManager.STATUS.UNKNOWN,
                     USDKManager.STATUS.FAIL -> {
-                        Log.d(name, "Device Initialization returned status $status")
+                        Log.d(TAG, "Device Initialization returned status $status")
                     }
                 }
             }
@@ -73,7 +74,7 @@ class UrovoUART(private val context: Context) : BaseRfidDevice(), RfidDevice {
         try {
             val stopped = stop()
             if (stopped) {
-                Log.d(name, "Device stopped")
+                Log.d(TAG, "Device stopped")
             }
 
             reader.disConnect()
@@ -94,7 +95,7 @@ class UrovoUART(private val context: Context) : BaseRfidDevice(), RfidDevice {
         val session: Byte = 0.toByte()
 
         reader.registerCallback(InventoryCallback { tag ->
-            Log.d(name, "Tag Received: $tag")
+            Log.d(TAG, "Tag Received: $tag")
             tryEmit(DeviceEvent.TagEvent(tag))
         })
 

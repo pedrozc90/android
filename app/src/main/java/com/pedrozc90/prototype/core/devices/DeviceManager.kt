@@ -2,7 +2,7 @@ package com.pedrozc90.prototype.core.devices
 
 import android.content.Context
 import android.util.Log
-import com.pedrozc90.rfid.chafon.ChafonDevice
+import com.pedrozc90.rfid.chafon.ChafonBle
 import com.pedrozc90.rfid.chainway.ChainwayBLE
 import com.pedrozc90.rfid.chainway.ChainwayUART
 import com.pedrozc90.rfid.core.RfidDevice
@@ -30,7 +30,7 @@ class DeviceManager(private val context: Context) {
                 DeviceType.CHAINWAY_UART -> ChainwayUART(context = context)
                 DeviceType.CHAINWAY_BLE -> ChainwayBLE(context = context)
                 DeviceType.UROVO_UART -> UrovoUART(context = context)
-                DeviceType.CHAFON_BLE -> ChafonDevice(context = context)
+                DeviceType.CHAFON_BLE -> ChafonBle(context = context)
                 else -> FakeRfidDevice()
             }
 

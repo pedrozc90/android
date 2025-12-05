@@ -12,11 +12,11 @@ class ChainwayUART(context: Context) : ChainwayBaseRfidDevice(context), RfidDevi
     override val TAG: String = "ChainwayRfidDevice"
 
     override var opts: Options? = null
-    override val reader: RFIDWithUHFUART = RFIDWithUHFUART.getInstance()
 
-    override val name = "ChainwayRfidDevice"
     override val minPower: Int = 1
     override val maxPower: Int = 30
+
+    override val reader: RFIDWithUHFUART = RFIDWithUHFUART.getInstance()
 
     override fun init(opts: Options) {
         this.opts = opts
@@ -107,11 +107,11 @@ class ChainwayUART(context: Context) : ChainwayBaseRfidDevice(context), RfidDevi
     }
 
     override fun getBeep(): Boolean {
-        throw UnsupportedOperationException("Beep setting is not supported on $name")
+        throw UnsupportedOperationException("Beep setting is not supported on $TAG")
     }
 
     override fun setBeep(enabled: Boolean): Boolean {
-        throw UnsupportedOperationException("Beep setting is not supported on $name")
+        throw UnsupportedOperationException("Beep setting is not supported on $TAG")
     }
 
     override fun getTagFocus(): Int {

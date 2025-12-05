@@ -1,24 +1,10 @@
 package com.pedrozc90.rfid.chafon
 
-import android.annotation.SuppressLint
-import android.bluetooth.BluetoothGatt
-import android.content.Context
 import android.util.Log
 import com.cf.beans.AllParamBean
-import com.cf.beans.BatteryCapacityBean
-import com.cf.beans.CmdData
 import com.cf.beans.DeviceInfoBean
-import com.cf.beans.DeviceNameBean
-import com.cf.beans.GeneralBean
-import com.cf.beans.OutputModeBean
-import com.cf.beans.TagInfoBean
-import com.cf.ble.BleUtil
-import com.cf.ble.interfaces.IOnNotifyCallback
-import com.cf.zsdk.BleCore
 import com.cf.zsdk.CfSdk
-import com.cf.zsdk.SdkC
 import com.cf.zsdk.cmd.CmdBuilder
-import com.cf.zsdk.cmd.CmdType
 import com.cf.zsdk.uitl.FormatUtil
 import com.cf.zsdk.uitl.LogUtil
 import com.pedrozc90.rfid.core.BaseRfidDevice
@@ -26,192 +12,37 @@ import com.pedrozc90.rfid.core.DeviceFrequency
 import com.pedrozc90.rfid.core.Options
 import com.pedrozc90.rfid.core.RfidDevice
 import com.pedrozc90.rfid.exceptions.RfidDeviceException
-import com.pedrozc90.rfid.objects.DeviceEvent
 import com.pedrozc90.rfid.objects.DeviceParams
-import com.pedrozc90.rfid.objects.RfidDeviceStatus
-import com.pedrozc90.rfid.objects.TagMetadata
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import java.util.UUID
 import java.util.concurrent.Executors
 import kotlin.math.floor
-import kotlin.math.max
 import kotlin.math.roundToInt
 
-class ChafonDevice(private val context: Context) : BaseRfidDevice(), RfidDevice, IOnNotifyCallback {
-
-    private val COMPANY_ID = "2795"
-    private val SERVICE_UUID: UUID = UUID.fromString("0000ffe0-0000-1000-8000-00805f9b34fb")
-    private val NOTIFY_UUID: UUID = UUID.fromString("0000ffe4-0000-1000-8000-00805f9b34fb")
-    private val WRITE_UUID: UUID = UUID.fromString("0000ffe3-0000-1000-8000-00805f9b34fb")
+abstract class ChafonDevice : BaseRfidDevice(), RfidDevice {
 
     override var opts: Options? = null
-    private var _batteryJob: Job? = null
 
-    override val name: String = "ChafonDevice"
     override val minPower: Int = 1
     override val maxPower: Int = 33
 
-    private val mBleCore: BleCore = CfSdk.get(SdkC.BLE)
-    private var mGatt: BluetoothGatt? = null
-    private var _params: AllParamBean? = null
-    private var _info: DeviceInfoBean? = null
+    protected var _params: AllParamBean? = null
+    protected var _info: DeviceInfoBean? = null
 
     init {
         // CfSdk.load should be called once in Application.onCreate; don't reload here.
         val executor = Executors.newSingleThreadExecutor()
         CfSdk.load(executor)
-        LogUtil.setLogSwitch(true)
-
-        mBleCore.init(context)
     }
 
-    @SuppressLint("MissingPermission")
     override fun init(opts: Options) {
-        require(opts.bDevice != null) { "BluetoothDevice must be provided." }
-
         // store options
         this.opts = opts
 
-        val self = this
+        LogUtil.setLogSwitch(opts.verbose)
 
-        scope.launch {
-            if (!mBleCore.isSupportBt) {
-                throw RfidDeviceException(message = "Bluetooth not supported on this device.")
-            }
-
-            if (!mBleCore.isEnabled) {
-                throw RfidDeviceException(message = "Bluetooth is not enabled on this device.")
-            }
-
-            mBleCore.setOnNotifyCallback(self)
-
-            mBleCore.setIConnectDoneCallback { b ->
-                if (b) {
-                    Log.d(name, "Bluetooth device connected successfully.")
-
-                    updateStatus(RfidDeviceStatus(status = "CONNECTED", device = opts.bDevice))
-
-                    val updated = mBleCore.setNotifyState(SERVICE_UUID, NOTIFY_UUID, true)
-                    Log.d(name, "Set notify state updated = $updated")
-
-                    self.getInventoryParams()
-                    self.getBatteryCapacity()
-                } else {
-                    Log.e(name, "Bluetooth device connection failed.")
-                    updateStatus(RfidDeviceStatus(status = "DISCONNECTED", device = opts.bDevice))
-                }
-            }
-
-            mBleCore.setIBleDisConnectCallback { ->
-                Log.d(name, "Bluetooth device disconnected.")
-                updateStatus(RfidDeviceStatus(status = "DISCONNECTED", device = opts.bDevice))
-            }
-
-            mGatt = mBleCore.connectDevice(opts.bDevice, context, true)
-            Log.d(name, "BluetoothGatt connected: $mGatt")
-
-            startBatteryPolling(opts)
-        }
+        this.initReader(opts)
     }
 
-    private fun startBatteryPolling(opts: Options) {
-        if (opts.battery) {
-            if (_batteryJob?.isActive == true) {
-                _batteryJob?.cancel()
-            }
-
-            val delayMs = max(opts.batteryPollingDelay, 1_000L)
-
-            _batteryJob = scope.launch {
-                while (isActive) {
-                    val updated = getBatteryCapacity()
-                    val value = if (updated) delayMs else (2 * delayMs)
-                    delay(value)
-                }
-            }
-        }
-    }
-
-    override fun onNotify(cmdType: Int, cmdData: CmdData?) {
-        when (cmdType) {
-            CmdType.TYPE_GET_DEVICE_INFO -> handleGetDeviceInfo(cmdData)
-            CmdType.TYPE_REBOOT -> handleReboot(cmdData)
-            CmdType.TYPE_SET_ALL_PARAM -> handleSetParam(cmdData)
-            CmdType.TYPE_GET_ALL_PARAM -> handleGetAllParam(cmdData)
-            CmdType.TYPE_GET_BATTERY_CAPACITY -> handleGetBatteryCapacity(cmdData)
-            CmdType.TYPE_SET_OR_GET_BT_NAME -> handleSetOrGetBTName(cmdData)
-            CmdType.TYPE_OUT_MODE -> handleOutMode(cmdData)
-            CmdType.TYPE_INVENTORY -> handleInventory(cmdData)
-            else -> handleAny(cmdType, cmdData)
-        }
-    }
-
-    private fun handleGetDeviceInfo(cmdData: CmdData?) {
-        val info = cmdData?.data as DeviceInfoBean
-        Log.d(name, "Device Info Handler -> $info")
-        _info = info
-    }
-
-    private fun handleReboot(cmdData: CmdData?) {
-        val info = cmdData?.data as GeneralBean
-        Log.d(name, "Reboot Info: $info")
-    }
-
-    private fun handleSetParam(cmdData: CmdData?) {
-        val info = cmdData?.data as GeneralBean
-        Log.d(name, "Set All Param Info: $info")
-    }
-
-    private fun handleGetAllParam(cmdData: CmdData?) {
-        val info = cmdData?.data as AllParamBean
-        Log.d(name, "Get All Param Handler -> $info")
-        _params = info
-    }
-
-    private fun handleGetBatteryCapacity(cmdData: CmdData?) {
-        val info = cmdData?.data as BatteryCapacityBean
-        Log.d(name, "Get Battery Capacity Info: $info")
-        val emitted = tryEmit(DeviceEvent.BatteryEvent(level = 0))
-        Log.d(name, "Battery event emitted: $emitted")
-    }
-
-    private fun handleSetOrGetBTName(cmdData: CmdData?) {
-        val info = cmdData?.data as DeviceNameBean
-        Log.d(name, "Set or Get BT Name Info: $info")
-    }
-
-    private fun handleOutMode(cmdData: CmdData?) {
-        val info = cmdData?.data as OutputModeBean
-        Log.d(name, "Out Mode Info: $info")
-    }
-
-    private fun handleInventory(cmdData: CmdData?) {
-        val info = cmdData?.data as? TagInfoBean
-        Log.d(name, "Inventory Tag Handler -> $info")
-        if (info != null) {
-            val rfid = FormatUtil.bytesToHexStr(info.mEPCNum).replace("\\s", "")
-            val tag = TagMetadata(
-                rfid = rfid,
-                rssi = info.mRSSI.toString(),
-                antenna = info.mAntenna
-            )
-            val published = publishTag(tag = tag)
-            if (published) {
-                Log.d(name, "Published tag: $tag")
-            }
-        }
-    }
-
-    private fun handleAny(cmdType: Int, cmdData: CmdData?) {
-        Log.d(name, "Unknown type = $cmdType, data = $cmdData")
-    }
-
-    fun isConnected(): Boolean {
-        return mBleCore.isConnect
-    }
+    abstract fun initReader(opts: Options)
 
     /**
      * Start inventory with parameters
@@ -220,25 +51,29 @@ class ChafonDevice(private val context: Context) : BaseRfidDevice(), RfidDevice,
      *                   if invType is 0x01, then invParam is number of tags to read
      * @return true if the command was sent successfully, false otherwise
      */
-    private fun startInventory(intType: Int = 0x00, invParam: Int = 0): Boolean {
+    protected open fun startInventory(intType: Int = 0x00, invParam: Int = 0x00): Boolean {
         val bytes = CmdBuilder.buildInventoryISOContinueCmd(intType.toByte(), invParam)
-        val result = this.writeData(pCmd = bytes)
-        Log.d(name, "Start inventory result = $result")
+        // TODO: Não sei pq, mas essa merda sem retorna FALSE
+        //       Além disso, o gatilho do leitor le as tags mesmo com o command 'startInventory" retornando FALSE
+        val result = this.writeData(bytes)
+        Log.d(TAG, "Start inventory result = $result")
         return result
     }
 
     override fun start(): Boolean {
-        this.getDeviceInfo()
-        this.getInventoryParams()
-        this.setPower(15)
-        this.setFrequency(DeviceFrequency.UNITED_STATES)
-        return this.startInventory(intType = 0x00, invParam = 0)
+        getDeviceInfo()
+        getInventoryParams()
+        setBeep(true)
+        setReadMode(mode = 0x00)
+        setPower(15)
+        setFrequency(DeviceFrequency.UNITED_STATES)
+        return startInventory(intType = 0x00, invParam = 0x00)
     }
 
-    private fun stopInventory(): Boolean {
+    protected fun stopInventory(): Boolean {
         val bytes = CmdBuilder.buildStopInventoryCmd()
-        val result = this.writeData(pCmd = bytes)
-        Log.d(name, "Stop inventory result = $result")
+        val result = this.writeData(bytes)
+        Log.d(TAG, "Stop inventory result = $result")
         return result
     }
 
@@ -248,20 +83,20 @@ class ChafonDevice(private val context: Context) : BaseRfidDevice(), RfidDevice,
 
     override fun getInventoryParams(): DeviceParams? {
         val bytes = CmdBuilder.buildGetAllParamCmd()
-        val result = this.writeData(pCmd = bytes)
-        Log.d(name, "Get AllParamCmd result: $result")
+        val result = this.writeData(bytes)
+        Log.d(TAG, "Get AllParamCmd result: $result")
         return null
     }
 
     override fun setInventoryParams(value: DeviceParams): Boolean {
         val params = _params
         if (params == null) {
-            Log.e(name, "Device parameters not loaded. Call getInventoryParams() first.")
+            Log.e(TAG, "Device parameters not loaded. Call getInventoryParams() first.")
             return false
         }
         val bytes = CmdBuilder.buildSetAllParamCmd(params)
         val result = this.writeData(bytes)
-        Log.d(name, "Set inventory params result = $result")
+        Log.d(TAG, "Set inventory params result = $result")
         return result
     }
 
@@ -275,14 +110,19 @@ class ChafonDevice(private val context: Context) : BaseRfidDevice(), RfidDevice,
     override fun setFrequency(value: DeviceFrequency): Boolean {
         val params = _params
         if (params == null) {
-            Log.e(name, "Device parameters not loaded. Call getInventoryParams() first.")
+            Log.e(TAG, "Device parameters not loaded. Call getInventoryParams() first.")
             return false
         }
 
         val freq = value.toChafon()
-        val band = freq.band      // band (Int)
-        val fStart = freq.fStart  // in MHz (Double)
-        val fStep = freq.fStep    // in MHz (Double)
+        if (freq == null) {
+            Log.e(TAG, "Frequency ${value.label} not supported.")
+            return false
+        }
+
+        val band = freq.band            // band (Int)
+        val fStart = freq.fStart        // in MHz (Double)
+        val fStep = freq.fStep          // in MHz (Double)
         val minIndex = freq.minIndex    // Int
         val maxIndex = freq.maxIndex    // Int
 
@@ -312,24 +152,37 @@ class ChafonDevice(private val context: Context) : BaseRfidDevice(), RfidDevice,
             throw IllegalArgumentException("Computed CN ($cn) is greater than device-typical maximum of 64.")
         }
 
-        params.mRfidFreq.mREGION = freq.band.toByte()
+        // Build the command bytes while synchronized on params to avoid races
+        val bytes = synchronized(params) {
+            // Ensure we have an RfidFreq instance and keep a stable reference
+            val freqStruct = params.mRfidFreq ?: AllParamBean.RfidFreq().also { params.mRfidFreq = it }
 
-        params.mRfidFreq.mSTRATFREI[0] = ((intPart shr 8) and 0xFF).toByte()
-        params.mRfidFreq.mSTRATFREI[1] = (intPart and 0xFF).toByte()
+            // Ensure internal arrays are initialized (adjust to actual types if non-nullable)
+            if (freqStruct.mSTRATFREI == null) freqStruct.mSTRATFREI = ByteArray(2)
+            if (freqStruct.mSTRATFRED == null) freqStruct.mSTRATFRED = ByteArray(2)
+            if (freqStruct.mSTEPFRE == null) freqStruct.mSTEPFRE = ByteArray(2)
 
-        params.mRfidFreq.mSTRATFRED[0] = ((fracKHz shr 8) and 0xFF).toByte()
-        params.mRfidFreq.mSTRATFRED[1] = (fracKHz and 0xFF).toByte()
+            // Write all fields
+            freqStruct.mREGION = band.toByte()
 
-        params.mRfidFreq.mSTEPFRE[0] = ((stepKHz shr 8) and 0xFF).toByte()
-        params.mRfidFreq.mSTEPFRE[1] = (stepKHz and 0xFF).toByte()
+            freqStruct.mSTRATFREI[0] = highByteOf(intPart)
+            freqStruct.mSTRATFREI[1] = lowByteOf(intPart)
 
-        params.mRfidFreq.mCN = cn.toByte()
+            freqStruct.mSTRATFRED[0] = highByteOf(fracKHz)
+            freqStruct.mSTRATFRED[1] = lowByteOf(fracKHz)
 
-        val bytes = CmdBuilder.buildSetAllParamCmd(params)
-        val result = this.writeData(pCmd = bytes)
-        Log.d(name, "Set frequency result = $result")
+            freqStruct.mSTEPFRE[0] = highByteOf(stepKHz)
+            freqStruct.mSTEPFRE[1] = lowByteOf(stepKHz)
+
+            freqStruct.mCN = cn.toByte()
+
+            // Build the command using the params (done while synchronized to keep consistency)
+            CmdBuilder.buildSetAllParamCmd(params)
+        }
+
+        val result = this.writeData(bytes)
+        Log.d(TAG, "Set frequency result = $result")
         return result
-
     }
 
     override fun checkFrequency(value: DeviceFrequency): Boolean {
@@ -359,77 +212,119 @@ class ChafonDevice(private val context: Context) : BaseRfidDevice(), RfidDevice,
             params.mRfidPower = value.toByte()
 
             val bytes = CmdBuilder.buildSetAllParamCmd(params)
-            return this.writeData(pCmd = bytes)
+            return this.writeData(bytes)
         }
 
         val reserved = 0x00.toByte()
         val bytes = CmdBuilder.buildSetPwrCmd(value.toByte(), reserved)
-        val result = this.writeData(pCmd = bytes)
-        Log.d(name, "Set power result = $result")
+        val result = this.writeData(bytes)
+        Log.d(TAG, "Set power result = $result")
         return result
     }
 
     override fun getBeep(): Boolean {
-        return false
+        val params = _params
+        if (params == null) {
+            Log.e(TAG, "Device parameters not loaded. Call getInventoryParams() first.")
+            return false
+        }
+
+        val buzzer = params.mBuzzerTime
+        return buzzer > 0x00
     }
 
     override fun setBeep(enabled: Boolean): Boolean {
-        return false
-    }
-
-    override fun kill(rfid: String, password: String?): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    fun startScanDevices(): Boolean {
-        if (!mBleCore.isConnect) {
-            Log.e(name, "Device is not connected")
+        val params = _params
+        if (params == null) {
+            Log.e(TAG, "Device parameters not loaded. Call getInventoryParams() first.")
             return false
         }
-        mBleCore.startScan { result ->
-            val scanRecord = result.scanRecord
-            if (scanRecord != null) {
-                val bytes = BleUtil.getCompanyId(scanRecord.bytes)
-                val hex = FormatUtil.bytesToHexStr(bytes)
-                Log.d(name, "ScanRecord CompanyId: $hex")
-                if (hex.startsWith(COMPANY_ID)) {
-                    Log.d(name, "Found Chafon device during scan: ${result.device.address}")
-                }
-            }
-        }
-        return true
-    }
 
-    fun stopScanDevices(): Boolean {
-        mBleCore.stopScan()
-        return true
-    }
+        val buzzer = if (enabled) 1 else 0
+        params.mBuzzerTime = buzzer.toByte()
 
-    private fun getDeviceInfo(): Any? {
-        val bytes = CmdBuilder.buildGetDeviceInfoCmd()
-        val result = this.writeData(pCmd = bytes)
-        Log.d(name, "GetDeviceInfoCmd result: $result")
-        return null
-    }
-
-    private fun getBatteryCapacity(): Boolean {
-        val bytes = CmdBuilder.buildGetBatteryCapacityCmd()
-        val result = this.writeData(pCmd = bytes)
-        Log.d(name, "GetBatteryCapacityCmd result = $result")
+        val bytes = CmdBuilder.buildSetAllParamCmd(params)
+        val result = this.writeData(bytes)
+        Log.d(TAG, "Change beep to '$enabled' ('$buzzer') returned '$result'")
         return result
     }
 
-    private fun writeData(pCmd: ByteArray): Boolean {
-        return mBleCore.writeData(SERVICE_UUID, WRITE_UUID, pCmd)
+    override fun kill(rfid: String, password: String?): Boolean {
+        // select tag first
+        val mask: ByteArray = FormatUtil.hexStrToByteArray(rfid)
+        val sBytes = CmdBuilder.buildSelectMaskCmd(mask)
+        val sResult = this.writeData(sBytes)
+        if (!sResult) return false
+
+        // then we kill tag
+        val pwd = password ?: "0000000"
+        val pwdBytes = FormatUtil.hexStrToByteArray(pwd)
+        val kBytes = CmdBuilder.buildKlenlISOTagCmd(pwdBytes)
+        val kResult = this.writeData(kBytes)
+        return kResult
     }
 
-    override fun close() {
-        super.close()
-        mBleCore.setNotifyState(SERVICE_UUID, NOTIFY_UUID, false, null)
-        mBleCore.setOnNotifyCallback(null)
-        mBleCore.setIConnectDoneCallback(null)
-        mBleCore.setIBleDisConnectCallback(null)
-        mBleCore.disconnectedDevice()
+    fun getDeviceInfo(): Any? {
+        if (_info == null) {
+            val bytes = CmdBuilder.buildGetDeviceInfoCmd()
+            val result = this.writeData(bytes)
+            Log.d(TAG, "GetDeviceInfoCmd result: $result")
+            return null
+        }
+        return _info
+    }
+
+    /**
+     * Send command to get battery capacity, this trigger a notification.
+     *
+     * @return true if the command was sent successfully, false otherwise
+     */
+    protected fun getBatteryCapacity(): Boolean {
+        val bytes = CmdBuilder.buildGetBatteryCapacityCmd()
+        return this.writeData(bytes)
+    }
+
+    /**
+     * Set read mode
+     *
+     * @param mode - scanning mode
+     *               0x00 = turn-on RFID mode and turn-off QR code mode
+     *               0x01 = turn-on QR code mode and turn-off RFID mode
+     * @param recev - reserve byte array (7 bytes)
+     * @return true if the command was sent successfully, false otherwise
+     */
+    protected fun setReadMode(mode: Int = 0x00, recev: ByteArray = ByteArray(7)): Boolean {
+        val bytes = CmdBuilder.buildSetReadModeCmd(mode.toByte(), recev)
+        return this.writeData(bytes)
+    }
+
+    protected abstract fun writeData(bytes: ByteArray): Boolean
+
+    // HELPERS
+    /**
+     * Return the high-order (most significant) byte of a 16-bit value.
+     *
+     * The input `value` is treated as an unsigned 16-bit integer (only bits 0..15 are used).
+     * This function extracts bits 8..15 and returns them as a Byte suitable for big-endian encoding.
+     *
+     * @param value Int containing the value to extract (only the lower 16 bits are considered)
+     * @return Byte representing the high-order 8 bits (0x00..0xFF)
+     */
+    private fun highByteOf(value: Int): Byte {
+        return ((value shr 8) and 0xFF).toByte()
+    }
+
+    /**
+     * Return the low-order (least significant) byte of a 16-bit value.
+     *
+     * The input `value` is treated as an unsigned 16-bit integer (only bits 0..15 are used).
+     * This function extracts bits 0..7 and returns them as a Byte suitable for big-endian encoding.
+     *
+     * @param value Int containing the value to extract (only the lower 16 bits are considered)
+     * @return Byte representing the low-order 8 bits (0x00..0xFF)
+     */
+    private fun lowByteOf(value: Int): Byte {
+        return (value and 0xFF).toByte()
     }
 
 }

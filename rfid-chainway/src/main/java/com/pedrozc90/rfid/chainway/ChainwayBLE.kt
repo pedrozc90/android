@@ -18,13 +18,12 @@ class ChainwayBLE(context: Context) : ChainwayBaseRfidDevice(context), RfidDevic
     override val TAG = "ChainwayBluetoothRfidDevice"
 
     override var opts: Options? = null
-    override val reader: RFIDWithUHFBLE = RFIDWithUHFBLE.getInstance()
 
-    private var _batteryJob: Job? = null
-
-    override val name = "ChainwayBluetoothRfidDevice"
     override val minPower: Int = 1
     override val maxPower: Int = 30
+
+    override val reader: RFIDWithUHFBLE = RFIDWithUHFBLE.getInstance()
+    private var _batteryJob: Job? = null
 
     override fun init(opts: Options) {
         this.opts = opts

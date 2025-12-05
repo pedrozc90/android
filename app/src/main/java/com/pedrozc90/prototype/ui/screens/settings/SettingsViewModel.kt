@@ -13,7 +13,6 @@ import com.pedrozc90.prototype.ui.screens.devices.DevicesUiState
 import com.pedrozc90.rfid.core.DeviceFrequency
 import com.pedrozc90.rfid.core.Options
 import com.pedrozc90.rfid.core.RfidDevice
-import com.pedrozc90.rfid.helpers.DeviceDetector
 import com.pedrozc90.rfid.helpers.DeviceType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -79,7 +78,7 @@ class SettingsViewModel(
         if (changed) {
             device = buildRfidDevice(state.type)
             if (device != null) {
-                Log.d(TAG, "Device type changed, new device: ${device!!.name}")
+                Log.d(TAG, "Device type changed, new device: ${device!!.TAG}")
                 val powerMin = device!!.minPower
                 val powerMax = device!!.maxPower
                 val powerValue = if (state.power > powerMax) {
@@ -131,7 +130,7 @@ class SettingsViewModel(
 
             val bDevice = if (state.type == DeviceType.CHAFON_BLE && macAddress != null)
                 bluetooth.get(macAddress)
-                else null
+            else null
 
             val opts = Options(
                 macAddress = state.macAddress,

@@ -29,8 +29,6 @@ import kotlinx.coroutines.Job
 abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfidDevice(),
     RfidDevice {
 
-    protected abstract val TAG: String
-
     protected abstract val reader: IUHF
 
     protected var _job: Job? = null

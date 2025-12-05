@@ -15,3 +15,11 @@
 
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 ```
+
+## Issues
+
+1. Command `startInventory` always return `FALSE`
+2. Reader `trigger button` start reading, even with `startInventory` returning `FALSE`
+3. Reader notification callback only works when we get the line below in logs
+    >   BluetoothGatt |  setCharacteristicNotification() - uuid: 0000ffe4-0000-1000-8000-00805f9b34fb enable: true
+4.  Command `setPower` always return `FALSE`
