@@ -6,6 +6,7 @@ import com.cf.zsdk.CfSdk
 import com.cf.zsdk.SdkC
 import com.cf.zsdk.UartCore
 import com.pedrozc90.rfid.core.Options
+import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
 class ChafonUART(private val context: Context) : ChafonDevice() {
@@ -20,21 +21,23 @@ class ChafonUART(private val context: Context) : ChafonDevice() {
         CfSdk.load(executor)
     }
 
-    override fun initReader(opts: Options) {
+    override suspend fun initReader(opts: Options) {
         val path = "/dev/ttyS7"
-        val baudRate = 115_200
-        _core.init(path, baudRate)
 
-        _core.receiverData { this.onDataCallback(it) }
+        _core.init(path, opts.baudRate)
+
+        _core.receiverData { onDataCallback(it) }
     }
 
     private fun onDataCallback(bytes: ByteArray?) {
-        if (bytes != null) {
-            Log.d(TAG, "Data Received: $bytes")
+        scope.launch {
+            if (bytes != null) {
+                Log.d(TAG, "Data Received: $bytes")
+            }
         }
     }
 
-    override fun writeData(bytes: ByteArray): Boolean {
+    override suspend fun writeData(bytes: ByteArray): Boolean {
         return _core.sendData(bytes)
     }
 

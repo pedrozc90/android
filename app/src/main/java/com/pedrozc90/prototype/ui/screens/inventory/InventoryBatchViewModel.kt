@@ -224,53 +224,60 @@ class InventoryBatchViewModel(
 
     @OptIn(DelicateCoroutinesApi::class)
     fun onDispose() {
-        try {
-            Log.d(TAG, "Closing channel ${_channel}")
-            if (!_channel.isClosedForSend) {
+        viewModelScope.launch {
+            // cancel jobs
+            _job?.let {
+                if (it.isActive) {
+                    it.cancel()
+                }
+            }
+            _job = null
+
+            if (_consumer.isActive) {
+                _consumer.cancel()
+            }
+
+            try {
                 val closed = _channel.close()
                 if (closed) {
                     Log.d(TAG, "Channel closed successfully")
                 } else {
                     Log.e(TAG, "Channel close failed")
                 }
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to close channel", e)
             }
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to close channel", e)
-        }
 
-        if (_consumer.isActive) {
-            _consumer.cancel()
-        }
-
-        if (_job?.isActive == true) {
-            _job?.cancel()
-            _job = null
-        }
-
-        // stop device (if you want to ensure it's not scanning) and close resources
-        try {
-            device?.stop()
-            device?.close()
-        } catch (t: Throwable) {
-            Log.w(TAG, "Error while closing device", t)
+            // stop device (if you want to ensure it's not scanning) and close resources
+            try {
+                device?.apply {
+                    stop()
+                    close()
+                }
+            } catch (t: Throwable) {
+                Log.w(TAG, "Error while closing device", t)
+            }
         }
     }
 
     fun start() {
-        if (_uiState.value.isRunning) return
-        val started = device?.start() ?: false
-        _uiState.update { it.copy(isRunning = started) }
+        viewModelScope.launch {
+            if (!_uiState.value.isRunning) {
+                val started = device?.start() ?: false
+                _uiState.update { it.copy(isRunning = started) }
+            }
+        }
     }
 
     fun stop() {
-        // stop device first to stop new inputs
-        val stopped = device?.stop() ?: false
-
-        // update state
-        _uiState.update { it.copy(isRunning = !stopped) }
-
         viewModelScope.launch {
             try {
+                // stop device first to stop new inputs
+                val stopped = device?.stop() ?: false
+
+                // update state
+                _uiState.update { it.copy(isRunning = !stopped) }
+
                 // flush pending inputs and stop actor
                 val ack = CompletableDeferred<Unit>()
                 _channel.send(ActorCmd.Flush(ack))

@@ -18,21 +18,22 @@ import com.rscja.deviceapi.interfaces.IUHF
  * API to request TID-only results you can adapt this helper.
  */
 object UHFConfig {
+
     private const val TAG = "UHFConfig"
 
     /**
      * Configure the reader inventory/result mode.
      *
-     * @param reader an implementation of IUHF (e.g. RFIDWithUHFBLE, RFIDWithUHFUART).
-     * @param epc include EPC in inventory results (default true)
-     * @param tid include TID in inventory results (default true)
-     * @param rssi include RSSI in results (default true). Note: setSupportRssi is only available on
-     *             certain concrete classes (e.g. RFIDWithUHFBLE). For other IUHF implementations this is skipped.
-     * @param user include USER memory in results (default false)
+     * @param reader - an implementation of IUHF (e.g. RFIDWithUHFBLE, RFIDWithUHFUART).
+     * @param epc    - include EPC in inventory results (default true)
+     * @param tid    - include TID in inventory results (default true)
+     * @param rssi   - include RSSI in results (default true). Note: setSupportRssi is only available on
+     *                 certain concrete classes (e.g. RFIDWithUHFBLE). For other IUHF implementations this is skipped.
+     * @param user   - include USER memory in results (default false)
      * @return true if the requested mode call succeeded (or at least was invoked without throwing),
      *         false if an error occurred or the mode method returned false.
      */
-    fun configureInventory(
+    suspend fun configureInventory(
         reader: IUHF,
         epc: Boolean = true,
         tid: Boolean = true,
@@ -88,4 +89,5 @@ object UHFConfig {
             false
         }
     }
+
 }

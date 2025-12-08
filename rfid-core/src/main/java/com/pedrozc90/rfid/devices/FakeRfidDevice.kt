@@ -5,7 +5,6 @@ import com.pedrozc90.rfid.core.BaseRfidDevice
 import com.pedrozc90.rfid.core.DeviceFrequency
 import com.pedrozc90.rfid.core.Options
 import com.pedrozc90.rfid.core.RfidDevice
-import com.pedrozc90.rfid.objects.DeviceEvent
 import com.pedrozc90.rfid.objects.DeviceParams
 import com.pedrozc90.rfid.objects.RfidDeviceStatus
 import com.pedrozc90.rfid.objects.TagMetadata
@@ -46,27 +45,29 @@ class FakeRfidDevice(
         generateEpcs()
     }
 
-    override fun init(opts: Options) {
+    override suspend fun init(opts: Options) {
         this.opts = opts
-        Log.d(com.pedrozc90.rfid.devices.TAG, "Device initialized.")
-        updateStatus(RfidDeviceStatus.Companion.of(status = "INITIALIZED"))
+        Log.d(TAG, "Device initialized.")
+        updateStatus(RfidDeviceStatus.of(status = "INITIALIZED"))
     }
 
     override fun close() {
-        try {
-            this.stop()
-        } finally {
-            super.close()
+        scope.launch {
+            try {
+                stop()
+            } finally {
+                super.close()
+            }
         }
     }
 
-    override fun start(): Boolean {
+    override suspend fun start(): Boolean {
         if (_job?.isActive == true) {
-            Log.d(com.pedrozc90.rfid.devices.TAG, "Device has already been started")
+            Log.d(TAG, "Device has already been started")
             return false
         }
 
-        updateStatus(RfidDeviceStatus.Companion.of(status = "RUNNING"))
+        updateStatus(RfidDeviceStatus.of(status = "RUNNING"))
 
         _job = CoroutineScope(Dispatchers.Default).launch {
             val length = _dataSource.size
@@ -85,12 +86,9 @@ class FakeRfidDevice(
                     // Suspending emit() combined with cancellation can create races where
                     // the emitter coroutine is cancelled while suspended and future
                     // starts don't behave as expected. tryEmit avoids that.
-                    val emitted = tryEmit(DeviceEvent.TagEvent(tag = tag))
+                    val emitted = publishTag(tag = tag)
                     if (!emitted) {
-                        Log.d(
-                            com.pedrozc90.rfid.devices.TAG,
-                            "Failed to emit EPC (buffer full): $rfid"
-                        )
+                        Log.d(TAG, "Failed to emit EPC (buffer full): $rfid")
                     }
                 }
 
@@ -109,8 +107,8 @@ class FakeRfidDevice(
         return true
     }
 
-    override fun stop(): Boolean {
-        updateStatus(RfidDeviceStatus.Companion.of(status = "STOPPED"))
+    override suspend fun stop(): Boolean {
+        updateStatus(RfidDeviceStatus.of(status = "STOPPED"))
         if (_job?.isActive == true) {
             _job?.cancel()
             _job = null
@@ -118,8 +116,54 @@ class FakeRfidDevice(
         return true
     }
 
+    // API
+    override suspend fun getInventoryParams(): DeviceParams? {
+        return _params
+    }
+
+    override suspend fun setInventoryParams(value: DeviceParams): Boolean {
+        _params = value
+        return true
+    }
+
+    override suspend fun getFrequency(): DeviceFrequency {
+        return _frequency
+    }
+
+    override suspend fun setFrequency(value: DeviceFrequency): Boolean {
+        _frequency = value
+        return true
+    }
+
+    override fun checkFrequency(value: DeviceFrequency): Boolean {
+        return true
+    }
+
+    override suspend fun getPower(): Int {
+        return _power
+    }
+
+    override suspend fun setPower(value: Int): Boolean {
+        _power = value
+        return true
+    }
+
+    override suspend fun getBeep(): Boolean {
+        return _beep
+    }
+
+    override suspend fun setBeep(enabled: Boolean): Boolean {
+        _beep = enabled
+        return true
+    }
+
+    override suspend fun kill(rfid: String, password: String?): Boolean {
+        throw UnsupportedOperationException("Kill operation is not supported.")
+    }
+
+    // HELPERS
     private fun generateEpcs() {
-        Log.d(com.pedrozc90.rfid.devices.TAG, "Generating Epcs ...")
+        Log.d(TAG, "Generating Epcs ...")
         repeat(10_000) { idx ->
             val epc = EpcUtils.encode(
                 filter = 3,
@@ -129,51 +173,6 @@ class FakeRfidDevice(
             )
             _dataSource.add(epc)
         }
-    }
-
-    // API
-    override fun getInventoryParams(): DeviceParams? {
-        return _params
-    }
-
-    override fun setInventoryParams(value: DeviceParams): Boolean {
-        _params = value
-        return true
-    }
-
-    override fun getFrequency(): DeviceFrequency {
-        return _frequency
-    }
-
-    override fun setFrequency(value: DeviceFrequency): Boolean {
-        _frequency = value
-        return true
-    }
-
-    override fun checkFrequency(value: DeviceFrequency): Boolean {
-        return true
-    }
-
-    override fun getPower(): Int {
-        return _power
-    }
-
-    override fun setPower(value: Int): Boolean {
-        _power = value
-        return true
-    }
-
-    override fun getBeep(): Boolean {
-        return _beep
-    }
-
-    override fun setBeep(enabled: Boolean): Boolean {
-        _beep = enabled
-        return true
-    }
-
-    override fun kill(rfid: String, password: String?): Boolean {
-        throw UnsupportedOperationException("Kill operation is not supported.")
     }
 
 }

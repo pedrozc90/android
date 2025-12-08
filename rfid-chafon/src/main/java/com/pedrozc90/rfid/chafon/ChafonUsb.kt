@@ -7,6 +7,7 @@ import com.cf.zsdk.SdkC
 import com.cf.zsdk.UsbCore
 import com.pedrozc90.rfid.core.Options
 import com.pedrozc90.rfid.exceptions.RfidDeviceException
+import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
 class ChafonUsb(private val context: Context) : ChafonDevice() {
@@ -22,31 +23,33 @@ class ChafonUsb(private val context: Context) : ChafonDevice() {
         CfSdk.load(executor)
     }
 
-    override fun initReader(opts: Options) {
+    override suspend fun initReader(opts: Options) {
         _core.init(context)
 
         val usbDevice = _core.findTargetDevice(0, 0)
-        if (usbDevice == null) {
-            throw RfidDeviceException(message = "Usb device not found.")
-        }
+            ?: throw RfidDeviceException(message = "Usb device not found.")
 
-        _core.connectDevice(context, usbDevice) { this.onUsbConnectDone(it) }
+        _core.connectDevice(context, usbDevice) { onUsbConnectDone(it) }
 
-        _core.setIReadDataCallback { this.onReadData(it) }
+        _core.setIReadDataCallback { onReadData(it) }
     }
 
     private fun onUsbConnectDone(p0: Boolean) {
-        val p1 = if (p0) "ok" else "failed"
-        Log.d(TAG, "Device connection '$p1'")
-    }
-
-    private fun onReadData(bytes: ByteArray?) {
-        if (bytes != null) {
-            Log.d(TAG, "Data Received: $bytes")
+        scope.launch {
+            val p1 = if (p0) "ok" else "failed"
+            Log.d(TAG, "Device connection '$p1'")
         }
     }
 
-    override fun writeData(bytes: ByteArray): Boolean {
+    private fun onReadData(bytes: ByteArray?) {
+        scope.launch {
+            if (bytes != null) {
+                Log.d(TAG, "Data Received: $bytes")
+            }
+        }
+    }
+
+    override suspend fun writeData(bytes: ByteArray): Boolean {
         return _core.writeData(bytes, _timeout)
     }
 

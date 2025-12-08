@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 class ChainwayBLE(context: Context) : ChainwayBaseRfidDevice(context), RfidDevice {
 
-    override val TAG = "ChainwayBluetoothRfidDevice"
+    override val TAG = "ChainwayBLE"
 
     override var opts: Options? = null
 
@@ -25,7 +25,7 @@ class ChainwayBLE(context: Context) : ChainwayBaseRfidDevice(context), RfidDevic
     override val reader: RFIDWithUHFBLE = RFIDWithUHFBLE.getInstance()
     private var _batteryJob: Job? = null
 
-    override fun init(opts: Options) {
+    override suspend fun init(opts: Options) {
         this.opts = opts
 
         val address = opts.macAddress
@@ -83,7 +83,7 @@ class ChainwayBLE(context: Context) : ChainwayBaseRfidDevice(context), RfidDevic
         }
     }
 
-    override fun start(): Boolean {
+    override suspend fun start(): Boolean {
         try {
             if (opts == null) {
                 throw IllegalStateException("Device not initialized. Call init() before start().")
@@ -124,7 +124,7 @@ class ChainwayBLE(context: Context) : ChainwayBaseRfidDevice(context), RfidDevic
         }
     }
 
-    override fun stop(): Boolean {
+    override suspend fun stop(): Boolean {
         val stopped = reader.stopInventory()
         if (stopped) {
             Log.d(TAG, "Inventory stopped successfully")
@@ -157,28 +157,25 @@ class ChainwayBLE(context: Context) : ChainwayBaseRfidDevice(context), RfidDevic
     }
 
     // API
-    override fun getPower(): Int {
-        return getPower(reader)
+    override suspend fun getPower(): Int {
+        return getPower(reader = reader)
     }
 
-    override fun setPower(value: Int): Boolean {
-        return setPower(reader, value)
+    override suspend fun setPower(value: Int): Boolean {
+        return setPower(reader = reader, value = value)
     }
 
-    override fun getTagFocus(): Int {
+    override suspend fun getTagFocus(): Int {
         return getTagFocus(reader)
     }
 
     // BEEP
-    override fun getBeep(): Boolean {
+    override suspend fun getBeep(): Boolean {
         val result = reader.getBeep()
         return result == 1
     }
 
-    /**
-     * Enable or disable audible beep on tag read or events.
-     */
-    override fun setBeep(enabled: Boolean): Boolean {
+    override suspend fun setBeep(enabled: Boolean): Boolean {
         return reader.setBeep(enabled)
     }
 
