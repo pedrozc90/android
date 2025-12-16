@@ -90,7 +90,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.retrofit2.kotlinx.serialization.converter)
     implementation(libs.kotlinx.serialization.json)
-    implementation("com.squareup.okhttp3:logging-interceptor:5.2.1")
+    implementation(libs.logging.interceptor)
 
     // rfid
     implementation(project(":rfid-core"))
