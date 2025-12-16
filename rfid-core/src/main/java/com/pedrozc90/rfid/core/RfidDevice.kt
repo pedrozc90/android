@@ -1,5 +1,6 @@
 package com.pedrozc90.rfid.core
 
+import android.bluetooth.BluetoothDevice
 import com.pedrozc90.rfid.objects.DeviceEvent
 import com.pedrozc90.rfid.objects.DeviceParams
 import com.pedrozc90.rfid.objects.RfidDeviceStatus
@@ -114,5 +115,9 @@ data class Options(
     val frequency: DeviceFrequency = DeviceFrequency.BRAZIL, // device frequency
     val power: Int = 1,                                      // device power
     val battery: Boolean = true,                             // whether to poll battery status
-    val batteryPollingDelay: Long = 60_000L                  // milliseconds between battery status requests
+    val batteryPollingDelay: Long = 60_000L,                 // milliseconds between battery status requests
+
+    val baudRate: Int = 115_200,                             // uart baud rate - used by Urovo and Chainway UART
+
+    val bDevice: BluetoothDevice? = null                     // bluetooth device (android) - used by Chafon
 )

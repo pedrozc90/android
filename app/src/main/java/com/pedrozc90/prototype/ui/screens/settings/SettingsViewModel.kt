@@ -128,10 +128,17 @@ class SettingsViewModel(
             val state = _uiState.value
             val device = device
             if (device != null) {
+                val macAddress = state.macAddress
+
+                val bDevice = if (state.type == DeviceType.CHAFON_BLE && macAddress != null)
+                    bluetooth.getDevice(macAddress)
+                else null
+
                 val opts = Options(
                     macAddress = state.macAddress,
                     frequency = state.frequency,
-                    power = state.power
+                    power = state.power,
+                    bDevice = bDevice
                 )
 
                 device.init(opts)

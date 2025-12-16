@@ -14,6 +14,7 @@ class Constants {
             DeviceType.CHAINWAY_UART,
             DeviceType.CHAINWAY_BLE,
             DeviceType.UROVO_UART,
+            DeviceType.CHAFON_BLE,
         )
     }
 }

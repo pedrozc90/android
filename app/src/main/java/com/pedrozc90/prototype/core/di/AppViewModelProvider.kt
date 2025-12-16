@@ -62,6 +62,7 @@ object AppViewModelProvider {
             InventoryBasicViewModel(
                 manager = container().manager,
                 preferences = container().preferences,
+                bluetooth = container().bluetooth,
                 tagRepository = container().tagRepository,
                 inventoryRepository = container().inventoryRepository
             )

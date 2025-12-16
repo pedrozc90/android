@@ -96,4 +96,5 @@ dependencies {
     implementation(project(":rfid-core"))
     implementation(project(":rfid-chainway"))
     implementation(project(":rfid-urovo"))
+    implementation(project(":rfid-chafon"))
 }

@@ -3,6 +3,7 @@ package com.pedrozc90.prototype.ui.screens.inventory
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pedrozc90.prototype.core.bluetooth.BluetoothRepository
 import com.pedrozc90.prototype.core.devices.DeviceManager
 import com.pedrozc90.prototype.data.db.models.Inventory
 import com.pedrozc90.prototype.data.db.models.Tag
@@ -10,6 +11,7 @@ import com.pedrozc90.prototype.data.local.PreferencesRepository
 import com.pedrozc90.prototype.domain.repositories.InventoryRepository
 import com.pedrozc90.prototype.domain.repositories.TagRepository
 import com.pedrozc90.rfid.core.RfidDevice
+import com.pedrozc90.rfid.helpers.DeviceType
 import com.pedrozc90.rfid.objects.DeviceEvent
 import com.pedrozc90.rfid.objects.RfidDeviceStatus
 import com.pedrozc90.rfid.objects.TagMetadata
@@ -31,6 +33,7 @@ private const val TAG = "InventoryBasicViewModel"
 class InventoryBasicViewModel(
     private val manager: DeviceManager,
     private val preferences: PreferencesRepository,
+    private val bluetooth: BluetoothRepository,
     private val tagRepository: TagRepository,
     private val inventoryRepository: InventoryRepository
 ) : ViewModel() {
@@ -58,10 +61,15 @@ class InventoryBasicViewModel(
                 device = manager.build(type)
                 Log.d(TAG, "Built device '$device' of type '$type'")
 
+
                 val settings = preferences.getSettings().first()
 
-                val opts = settings.toRfidOptions()
+                val macAddress = settings.macAddress
+                val bDevice = if (type == DeviceType.CHAFON_BLE && macAddress != null)
+                    bluetooth.getDevice(macAddress)
+                else null
 
+                val opts = settings.toRfidOptions().copy(bDevice = bDevice)
                 _uiState.update { it.copy(settings = settings) }
 
                 device?.init(opts = opts)

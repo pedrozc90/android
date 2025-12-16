@@ -145,6 +145,9 @@ enum class DeviceType(
     CHAINWAY_BLE(label = "Chainway BLE (R6)", bluetooth = true),
     CHAINWAY_UART(label = "Chainway UART (C72)", builtIn = true),
     UROVO_UART(label = "Urovo UART", builtIn = true),
+    CHAFON_BLE(label = "Chafon BLE", bluetooth = true),
+    CHAFON_UART(label = "Chafon UART", builtIn = true),
+    CHAFON_USB(label = "Chafon USB"),
     FAKE(label = "Fake Device");
 
     companion object {
