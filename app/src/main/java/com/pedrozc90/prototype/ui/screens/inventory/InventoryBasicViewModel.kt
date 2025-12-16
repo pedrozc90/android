@@ -44,8 +44,8 @@ class InventoryBasicViewModel(
     private val _uniques = HashSet<String>()
     private val _uniquesMutex = Mutex()
 
-    private val _errors = MutableSharedFlow<String>(extraBufferCapacity = 1)
-    val errors = _errors.asSharedFlow()
+    private val _notifications = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val errors = _notifications.asSharedFlow()
 
     fun onInit() {
         viewModelScope.launch {
@@ -59,13 +59,15 @@ class InventoryBasicViewModel(
                 Log.d(TAG, "Built device '$device' of type '$type'")
 
                 val settings = preferences.getSettings().first()
+
                 val opts = settings.toRfidOptions()
+
                 _uiState.update { it.copy(settings = settings) }
 
                 device?.init(opts = opts)
             } catch (t: Throwable) {
                 Log.e(TAG, "Error during device initialization", t)
-                _errors.tryEmit("Error during device initialization. Reason: ${t.message}")
+                _notifications.tryEmit("Error during device initialization. Reason: ${t.message}")
             }
         }
 
@@ -91,35 +93,6 @@ class InventoryBasicViewModel(
         }
     }
 
-    /**
-     * Stop the collector and close the device resources.
-     * Decide whether this should be called by Composable onDispose() or only from onCleared().
-     */
-    fun onDispose() {
-        // Cancel collector first so it stops processing events
-        if (_job?.isActive == true) {
-            _job?.cancel()
-            _job = null
-        }
-
-        // stop device (if you want to ensure it's not scanning) and close resources
-        try {
-            device?.stop()
-            device?.close()
-        } catch (t: Throwable) {
-            Log.w(TAG, "Error while closing device", t)
-        }
-
-        // update UI state to reflect device is not running
-        _uiState.update { it.copy(isRunning = false) }
-    }
-
-    fun start() {
-        if (_uiState.value.isRunning) return
-        val started = device?.start() ?: false
-        _uiState.update { it.copy(isRunning = started) }
-    }
-
     private suspend fun handleTagEvent(tag: TagMetadata) {
         val isNew = _uniquesMutex.withLock { _uniques.add(tag.rfid) }
         if (isNew) {
@@ -141,30 +114,70 @@ class InventoryBasicViewModel(
         Log.e(TAG, "Device error event", cause)
     }
 
+    /**
+     * Stop the collector and close the device resources.
+     * Decide whether this should be called by Composable onDispose() or only from onCleared().
+     */
+    fun onDispose() {
+        // Cancel collector first so it stops processing events
+        if (_job?.isActive == true) {
+            _job?.cancel()
+            _job = null
+        }
+
+        // stop device (if you want to ensure it's not scanning) and close resources
+        viewModelScope.launch {
+            try {
+                val device = device
+                if (device != null) {
+                    device.stop()
+                    device.close()
+                }
+            } catch (t: Throwable) {
+                Log.w(TAG, "Error while closing device", t)
+            }
+        }
+
+        // update UI state to reflect device is not running
+        _uiState.update { it.copy(isRunning = false) }
+    }
+
+    fun start() {
+        viewModelScope.launch(context = Dispatchers.IO) {
+            if (!_uiState.value.isRunning) {
+                val started = device?.start() ?: false
+                _uiState.update { it.copy(isRunning = started) }
+            }
+        }
+    }
+
     fun stop() {
-        val stopped = device?.stop() ?: false
-        _uiState.update { it.copy(isRunning = !stopped) }
+        viewModelScope.launch(context = Dispatchers.IO) {
+            if (_uiState.value.isRunning) {
+                val stopped = device?.stop() ?: false
+                _uiState.update { it.copy(isRunning = !stopped) }
+            }
+        }
     }
 
-    private var _tag: TagMetadata? = null
+    fun killTag(tag: TagMetadata) {
+        viewModelScope.launch {
+            try {
+                val device = device
+                if (device != null) {
+                    val killed = device.kill(rfid = tag.rfid)
+                    if (!killed) {
+                        throw RuntimeException("Failed to kill tag ${tag.rfid}")
+                    }
 
-    fun markAsKillTag(tag: TagMetadata) {
-        _tag = tag
-    }
-
-    fun killTag() {
-        val tag = _tag
-        val device = device
-        if (device != null && tag != null) {
-            val killed = device.kill(tag.rfid)
-            if (killed) {
-                val msg = "Tag ${tag.rfid} killed successfully"
-                Log.d(TAG, msg)
-                _errors.tryEmit(msg)
-            } else {
-                val msg = "Failed to kill tag ${tag.rfid}"
-                Log.e(TAG, msg)
-                _errors.tryEmit(msg)
+                    val msg = "Tag ${tag.rfid} killed successfully"
+                    Log.d(TAG, msg)
+                    _notifications.emit(msg)
+                }
+            } catch (e: Exception) {
+                val msg = e.message ?: "Error killing tag ${tag.rfid}"
+                Log.e(TAG, msg, e)
+                _notifications.emit(msg)
             }
         }
     }

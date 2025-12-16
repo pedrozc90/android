@@ -38,6 +38,7 @@ class PrototypeActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        Log.d(TAG, "onDestroy called")
         super.onDestroy()
         bluetooth.onDestroy()
     }

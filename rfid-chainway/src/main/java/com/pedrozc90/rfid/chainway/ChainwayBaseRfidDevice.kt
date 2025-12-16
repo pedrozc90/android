@@ -29,8 +29,6 @@ import kotlinx.coroutines.Job
 abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfidDevice(),
     RfidDevice {
 
-    protected abstract val TAG: String
-
     protected abstract val reader: IUHF
 
     protected var _job: Job? = null
@@ -62,31 +60,42 @@ abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfid
     }
 
     // API
-    fun configUHFInfo(
+    /**
+     * Configure which data fields are included in inventory/tag reports.
+     *
+     * @param epc   Include EPC data (default: true)
+     * @param tid   Include TID data (default: true)
+     * @param rssi  Include RSSI data (default: true)
+     * @param user  Include USER memory data (default: false)
+     *
+     * @return Boolean indicating whether the configuration was successful.
+     */
+    suspend fun configUHFInfo(
         epc: Boolean = true,
         tid: Boolean = true,
         rssi: Boolean = true,
         user: Boolean = false
-    ): Boolean {
-        return UHFConfig.configureInventory(
-            reader = reader,
-            epc = epc,
-            tid = tid,
-            rssi = rssi,
-            user = user
-        )
-    }
+    ): Boolean = UHFConfig.configureInventory(
+        reader = reader,
+        epc = epc,
+        tid = tid,
+        rssi = rssi,
+        user = user
+    )
 
     // POWER
-    fun getPower(reader: ISingleAntenna): Int {
+    suspend fun getPower(reader: ISingleAntenna): Int {
         return reader.getPower()
     }
 
     /**
      * Sets the RF output power of the UHF radio
-     * value: Power level (0-30 dBm)
+     *
+     * @param reader - an implementation of ISingleAntenna
+     * @param value - Power level (0-30 dBm)
+     * @return Boolean indicating whether the power was successfully set.
      */
-    fun setPower(reader: ISingleAntenna, value: Int): Boolean {
+    suspend fun setPower(reader: ISingleAntenna, value: Int): Boolean {
         val clamped = value.clamp(0, 30)
         val updated = reader.setPower(clamped)
         if (updated) {
@@ -98,11 +107,11 @@ abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfid
     }
 
     // CONTINUOUS WAVE
-    fun getContinuousWave(): Int {
+    suspend fun getContinuousWave(): Int {
         return reader.getCW()
     }
 
-    fun setContinuousWave(enabled: Boolean): Boolean {
+    suspend fun setContinuousWave(enabled: Boolean): Boolean {
         val value = when (enabled) {
             true -> 1
             false -> 0
@@ -117,16 +126,13 @@ abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfid
     }
 
     // FREQUENCY MODE
-    override fun getFrequency(): DeviceFrequency? {
+    override suspend fun getFrequency(): DeviceFrequency? {
         val mask = reader.getFrequencyMode() // 0x3C = Brazil
         val freq = ChainwayFrequency.of(mask)
         return freq?.toDeviceFrequency()
     }
 
-    /**
-     * Selects a pre-configured region frequency plan
-     */
-    override fun setFrequency(value: DeviceFrequency): Boolean {
+    override suspend fun setFrequency(value: DeviceFrequency): Boolean {
         val freq = value.toChainway()
         if (freq == null) throw RfidDeviceException(message = "Frequency not supported.")
 
@@ -145,25 +151,32 @@ abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfid
     /**
      * Configure frequency hopping behavior (channel list or hopping enable/disable).
      */
-    fun setFreHop(value: Float): Boolean {
+    suspend fun setFreHop(value: Float): Boolean {
         return reader.setFreHop(value)
     }
 
     // RFLINK
-    fun getRFLink(): Int {
+    suspend fun getRFLink(): Int {
         return reader.getRFLink()
     }
 
     /**
      * Set RF link parameters/profile (modulation, link optimization).
      */
-    fun setRFLink(value: Int): Boolean {
+    suspend fun setRFLink(value: Int): Boolean {
         return reader.setRFLink(value)
     }
 
     // PROTOCOL
-    fun getProtocol(): Int {
-        return reader.getProtocol()
+    /**
+     * Get/read supported tag protocol (usually Gen2 / EPCglobal UHF Class 1 Gen2).
+     *
+     * 0 = ISO 18000-6C
+     * 1 = GB/T 29768
+     * 2 = GJB 7377.1
+     */
+    suspend fun getProtocol(): Int {
+        return reader.protocol
     }
 
     /**
@@ -173,19 +186,19 @@ abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfid
      * 1 = GB/T 29768
      * 2 = GJB 7377.1
      */
-    fun setProtocol(value: Int): Boolean {
+    suspend fun setProtocol(value: Int): Boolean {
         return reader.setProtocol(value)
     }
 
     // GEN 2 SETTINGS
-    override fun getInventoryParams(): DeviceParams? {
+    override suspend fun getInventoryParams(): DeviceParams? {
         val entity = reader.gen2
         val params = entity.toDeviceParams()
         Log.d(TAG, "Gen2Entity: $entity -> $params")
         return params
     }
 
-    override fun setInventoryParams(value: DeviceParams): Boolean {
+    override suspend fun setInventoryParams(value: DeviceParams): Boolean {
         val entity = value.toGen2Entity()
         val updated = reader.setGen2(entity)
         Log.d(TAG, "Gen2 Updated $updated to $value -> $entity")
@@ -193,25 +206,25 @@ abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfid
     }
 
     // FOCUS
-    fun getTagFocus(reader: IUhfReader): Int {
+    suspend fun getTagFocus(reader: IUhfReader): Int {
         return reader.getTagfocus()
     }
 
-    abstract fun getTagFocus(): Int
+    abstract suspend fun getTagFocus(): Int
 
     fun setTagFocus(enabled: Boolean): Boolean {
         return reader.setTagFocus(enabled)
     }
 
     // FAST INVENTORY MODE
-    fun getFastInventoryMode(): Int {
+    suspend fun getFastInventoryMode(): Int {
         return reader.getFastInventoryMode()
     }
 
     /**
      * Toggle a faster inventory algorithm/mode (may sacrifice some accuracy for speed)
      */
-    fun setFastInventoryMode(enabled: Boolean): Boolean {
+    suspend fun setFastInventoryMode(enabled: Boolean): Boolean {
         return reader.setFastInventoryMode(enabled)
     }
 
@@ -255,7 +268,7 @@ abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfid
      *
      * Returns Boolean indicating whether the kill operation succeeded (true) or failed (false).
      */
-    private fun killTag(
+    private suspend fun killTag(
         accessPwd: String,
         filterBank: Int = 0,
         filterPtr: Int = 0,
@@ -286,13 +299,13 @@ abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfid
         return reader.killTag(accessPwd, filterBank, filterPtr, filterLen, filterData)
     }
 
-    override fun kill(rfid: String, password: String?): Boolean {
+    override suspend fun kill(rfid: String, password: String?): Boolean {
         return killTag(
             accessPwd = password ?: "00000000",
             filterBank = IUHF.Bank_EPC,
             filterPtr = 16,
             filterLen = rfid.length * 4,
-            filterData = rfid            // epc hexadecimal string)
+            filterData = rfid            // epc hexadecimal (string)
         )
     }
 
@@ -310,7 +323,7 @@ abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfid
      * @param writeData  - write data, must be hexadecimal value
      * @return true if operation succeeded, false otherwise.
      */
-    fun writeTag(
+    suspend fun writeTag(
         accessPwd: String? = "00000000", // 4 bytes = 8 characters
         filterBank: Int = -1,
         filterPtr: Int = 0,
@@ -355,19 +368,6 @@ abstract class ChainwayBaseRfidDevice(protected val context: Context) : BaseRfid
     fun isHexadecimal(value: String?): Boolean {
         if (value == null || value.length == 0 || value.length % 2 != 0) return false
         return StringUtility.isHexNumberRex(value)
-    }
-
-    // OBJECTS
-    sealed class Command {
-        data class KillTag(
-            val pwd: String = "00000000",
-            val epc: Boolean = false,
-            val tid: Boolean = false,
-            val user: Boolean = false,
-            val ptr: Int = 0,
-            val cnt: Int = 0,
-            val data: String = ""
-        )
     }
 
 }

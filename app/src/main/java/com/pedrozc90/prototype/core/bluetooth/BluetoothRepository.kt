@@ -31,6 +31,8 @@ interface BluetoothRepository {
 
     fun onDestroy()
 
+    fun getDevice(address: String): BluetoothDevice
+
 }
 
 private const val TAG = "DefaultBluetoothRepository"
@@ -144,6 +146,12 @@ class DefaultBluetoothRepository(private val context: Context) : BluetoothReposi
                 _pairedDevices.update { devices }
             }
         pairedDevices?.forEach { Log.d(TAG, "Paired device: ${it}") }
+    }
+
+    override fun getDevice(address: String): BluetoothDevice {
+        val device = adapter?.getRemoteDevice(address)
+        require(device != null) { "Bluetooth device with address $address not found." }
+        return device
     }
 
 }

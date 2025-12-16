@@ -89,11 +89,15 @@ class DebugViewModel(
     }
 
     fun onStart() {
-        device.start()
+        viewModelScope.launch {
+            device.start()
+        }
     }
 
     fun onStop() {
-        device.stop()
+        viewModelScope.launch {
+            device.stop()
+        }
     }
 
     override fun onCleared() {

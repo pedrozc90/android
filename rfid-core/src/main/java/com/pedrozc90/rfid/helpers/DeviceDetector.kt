@@ -142,8 +142,8 @@ enum class DeviceType(
     val bluetooth: Boolean = false
 ) {
 
-    CHAINWAY_UART(label = "Chainway UART (C72)", builtIn = true),
     CHAINWAY_BLE(label = "Chainway BLE (R6)", bluetooth = true),
+    CHAINWAY_UART(label = "Chainway UART (C72)", builtIn = true),
     UROVO_UART(label = "Urovo UART", builtIn = true),
     FAKE(label = "Fake Device");
 

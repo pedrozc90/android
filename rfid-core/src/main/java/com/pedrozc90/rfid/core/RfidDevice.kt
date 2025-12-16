@@ -8,9 +8,10 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface RfidDevice : AutoCloseable {
 
+    val TAG: String
+
     var opts: Options?
 
-    val name: String
     val minPower: Int
     val maxPower: Int
 
@@ -27,70 +28,75 @@ interface RfidDevice : AutoCloseable {
     /**
      * Initialize the RFID device
      */
-    fun init(opts: Options = Options())
+    suspend fun init(opts: Options = Options())
 
     /**
      * Start the RFID device inventory process
      */
-    fun start(): Boolean
+    suspend fun start(): Boolean
 
     /**
      * Stop the RFID device inventory process
      */
-    fun stop(): Boolean
+    suspend fun stop(): Boolean
 
     /**
      * Get the current inventory parameters
      */
-    fun getInventoryParams(): DeviceParams?
+    suspend fun getInventoryParams(): DeviceParams?
 
     /**
      * Set the inventory parameters
      * @param value parameters to set
      * @return true if the operation was successful, false otherwise
      */
-    fun setInventoryParams(value: DeviceParams): Boolean
+    suspend fun setInventoryParams(value: DeviceParams): Boolean
 
     /**
      * Get the current frequency mode of the RFID device
      * @return current frequency mode
      */
-    fun getFrequency(): DeviceFrequency?
+    suspend fun getFrequency(): DeviceFrequency?
 
     /**
      * Set the frequency mode of the RFID device
      * @param value frequency mode to set
      * @return true if the operation was successful, false otherwise
      */
-    fun setFrequency(value: DeviceFrequency): Boolean
+    suspend fun setFrequency(value: DeviceFrequency): Boolean
 
+    /**
+     * Check if the given frequency mode is supported by the RFID device
+     * @param value frequency mode to check
+     * @return true if supported, false otherwise
+     */
     fun checkFrequency(value: DeviceFrequency): Boolean
 
     /**
      * Get the current read power of the RFID device
      * @return current power value
      */
-    fun getPower(): Int
+    suspend fun getPower(): Int
 
     /**
      * Set the read power of the RFID device
      * @param value power value to set
      * @return true if the operation was successful, false otherwise
      */
-    fun setPower(value: Int): Boolean
+    suspend fun setPower(value: Int): Boolean
 
     /**
      * Get the current beep setting
      * @return true if beep is enabled, false otherwise
      */
-    fun getBeep(): Boolean
+    suspend fun getBeep(): Boolean
 
     /**
      * Enable or disable the beep sound on tag read
      * @param enabled true to enable, false to disable
      * @return true if the operation was successful, false otherwise
      */
-    fun setBeep(enabled: Boolean): Boolean
+    suspend fun setBeep(enabled: Boolean): Boolean
 
     /**
      * Destroy tag with given RFID
@@ -98,7 +104,7 @@ interface RfidDevice : AutoCloseable {
      * @param password - access password, if required by the tag
      * @return true if the operation was successful, false otherwise
      */
-    fun kill(rfid: String, password: String? = null): Boolean
+    suspend fun kill(rfid: String, password: String? = null): Boolean
 
 }
 

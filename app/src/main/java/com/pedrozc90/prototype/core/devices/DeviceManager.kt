@@ -28,7 +28,7 @@ class DeviceManager(private val context: Context) {
             when (type) {
                 DeviceType.CHAINWAY_UART -> ChainwayUART(context = context)
                 DeviceType.CHAINWAY_BLE -> ChainwayBLE(context = context)
-                DeviceType.UROVO_UART -> UrovoUART(context)
+                DeviceType.UROVO_UART -> UrovoUART(context = context)
                 else -> FakeRfidDevice()
             }
 

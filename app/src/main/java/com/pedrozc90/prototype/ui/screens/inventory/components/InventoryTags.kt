@@ -37,7 +37,7 @@ import com.pedrozc90.rfid.objects.TagMetadata
 @Composable
 fun InventoryTagList(
     state: InventoryUiState,
-    onKillItem: (TagMetadata) -> Unit,
+    onKillTag: (TagMetadata) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val gridState = rememberLazyGridState()
@@ -59,7 +59,7 @@ fun InventoryTagList(
             ScannerTagItem(
                 index = idx,
                 item = item,
-                onKillItem = onKillItem
+                onKillTag = onKillTag
             )
         }
     }
@@ -69,7 +69,7 @@ fun InventoryTagList(
 private fun ScannerTagItem(
     index: Int = 0,
     item: TagMetadata,
-    onKillItem: (TagMetadata) -> Unit,
+    onKillTag: (TagMetadata) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -143,7 +143,7 @@ private fun ScannerTagItem(
                         }
 
                         Button(
-                            onClick = { onKillItem(item) },
+                            onClick = { onKillTag(item) },
                             modifier = Modifier
                                 .padding(horizontal = 8.dp)
                         ) {
@@ -188,7 +188,7 @@ private fun InventoryTagsPreview() {
     PrototypeTheme {
         InventoryTagList(
             state = state,
-            onKillItem = {}
+            onKillTag = {}
         )
     }
 }
@@ -201,7 +201,7 @@ private fun ScannerTagItemPreview() {
         ScannerTagItem(
             index = 0,
             item = item,
-            onKillItem = {}
+            onKillTag = {}
         )
     }
 }

@@ -62,8 +62,7 @@ fun InventoryBatchScreen(
         state = state,
         onStart = { viewModel.start() },
         onStop = { viewModel.stop() },
-        onKillItem = {},
-        onKillTag = {},
+        onKillTag = { Log.e(TAG, "Method not implemented.") },
         onReset = { viewModel.reset() },
         onSave = { viewModel.save() },
         modifier = modifier
@@ -95,7 +94,6 @@ private fun InventoryScreenPreview() {
             state = state,
             onStart = {},
             onStop = {},
-            onKillItem = {},
             onKillTag = {},
             onReset = {},
             onSave = {}
